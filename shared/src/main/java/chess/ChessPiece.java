@@ -59,12 +59,17 @@ public class ChessPiece {
         switch (pieceType) {
             case BISHOP:
                 return new BishopMoves().allPossibleMoves(board, myPosition);
+            case KING:
                 return new KingMoves().allPossibleMoves(board, myPosition);
+            case QUEEN:
                 return new QueenMoves().allPossibleMoves(board, myPosition);
+            case KNIGHT:
                 return new KnightMoves().allPossibleMoves(board, myPosition);
+            case PAWN:
                 return new PawnMoves().allPossibleMoves(board, myPosition);
+            case ROOK:
                 return new RookMoves().allPossibleMoves(board, myPosition);
-                default:
+            default:
                     return new MoveCalculator().allPossibleMoves(board, myPosition);
             }
     }
