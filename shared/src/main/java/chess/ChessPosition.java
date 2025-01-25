@@ -13,13 +13,9 @@ public class ChessPosition {
     private final int row;
     private final int column;
 
-    public ChessPosition(int row, int col) {
-        if (row < 1 || row > 8 || col < 1 || col > 8) {
-            throw new IllegalArgumentException(
-                    "Row and column must each be between 1 and 8. Provided: (" + row + ", " + col + ")");
-        }
+    public ChessPosition(int row, int column) {
         this.row = row;
-        this.column = col;
+        this.column = column;
     }
 
     /**
