@@ -60,9 +60,13 @@ public class ChessPiece {
             case BISHOP:
                 return new BishopMoves().allPossibleMoves(board, myPosition);
                 return new KingMoves().allPossibleMoves(board, myPosition);
-            default:
-                return new MoveCalculator().allPossibleMoves(board, myPosition);
-        }
+                return new QueenMoves().allPossibleMoves(board, myPosition);
+                return new KnightMoves().allPossibleMoves(board, myPosition);
+                return new PawnMoves().allPossibleMoves(board, myPosition);
+                return new RookMoves().allPossibleMoves(board, myPosition);
+                default:
+                    return new MoveCalculator().allPossibleMoves(board, myPosition);
+            }
     }
 }
 
