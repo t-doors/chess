@@ -1,5 +1,7 @@
 package chess;
 
+import chess.PieceMovesCalculator.*;
+
 import java.util.Collection;
 
 /**
@@ -54,8 +56,13 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        switch (pieceType) {
+            case BISHOP:
+                return new BishopMoves().allPossibleMoves(board, myPosition);
+                return new KingMoves().allPossibleMoves(board, myPosition);
+            default:
+                return new MoveCalculator().allPossibleMoves(board, myPosition);
+        }
     }
-
 }
 
