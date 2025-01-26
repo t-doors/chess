@@ -12,7 +12,7 @@ public class ChessBoard {
 
     public ChessBoard() {
         boardArray = new ChessPiece[8][8];
-        
+
     }
 
     /**
