@@ -53,6 +53,7 @@ public class ChessGame {
         throw new RuntimeException("Not implemented");
     }
 
+
     /**
      * Makes a move in a chess game
      *
