@@ -231,7 +231,6 @@ public class ChessGame {
     private void executeBoardMove(ChessMove move) {
         ChessPiece movingPiece = board.getPiece(move.getStartPosition());
         board.addPiece(move.getStartPosition(), null);
-
         if (move.getPromotionPiece() != null) {
             movingPiece = new ChessPiece(movingPiece.getTeamColor(), move.getPromotionPiece());
         }
