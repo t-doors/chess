@@ -13,6 +13,7 @@ public class ChessGame {
     private ChessBoard board;
     private TeamColor currentTurn;
 
+
     public ChessGame() {
         board = new ChessBoard();
         board.resetBoard();
