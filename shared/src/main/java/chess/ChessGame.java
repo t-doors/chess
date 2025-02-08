@@ -112,7 +112,6 @@ public class ChessGame {
         return underAttack(kingPos, teamColor, board);
     }
 
-
     /**
      * Determines if the given team is in checkmate
      *
@@ -120,8 +119,12 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (!isInCheck(teamColor)) {
+            return false;
+        }
+        return !teamHasAnyMoves(teamColor);
     }
+
 
     /**
      * Determines if the given team is in stalemate, which here is defined as having
@@ -242,9 +245,21 @@ public class ChessGame {
         board.addPiece(move.getEndPosition(), movingPiece);
     }
 
-
-
-
+    private boolean teamHasAnyMoves(TeamColor color) {
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition p = new ChessPosition(row, col);
+                ChessPiece occupant = board.getPiece(p);
+                if (occupant != null && occupant.getTeamColor() == color) {
+                    Collection<ChessMove> moves = validMoves(p);
+                    if (moves != null && !moves.isEmpty()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
 
 }
