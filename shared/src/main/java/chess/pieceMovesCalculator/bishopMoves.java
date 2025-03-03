@@ -1,4 +1,4 @@
-package chess.PieceMovesCalculator;
+package chess.pieceMovesCalculator;
 
 import chess.*;
 
@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 
-public class BishopMoves extends MoveCalculator {
+public class bishopMoves extends moveCalculator {
 
     @Override
     public Collection<ChessMove> allPossibleMoves(ChessBoard board, ChessPosition startPos) {
