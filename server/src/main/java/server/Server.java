@@ -14,6 +14,7 @@ public class Server {
 
     private UserService userService;
     private UserHandler userHandler;
+    private SessionHandler sessionHandler;
 
     public Server() {
         userDAO = new MemoryUserDAO();
@@ -26,6 +27,8 @@ public class Server {
         userService = new UserService(userDAO, authDAO);
         userHandler = new UserHandler(userService);
 
+        sessionHandler = new SessionHandler(userService);
+
     }
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -34,6 +37,7 @@ public class Server {
 
         Spark.delete("/db", clearHandler::handleClear);
         Spark.post("/user", userHandler::handleRegister);
+        Spark.post("/session", sessionHandler::handleLogin);
 
         Spark.awaitInitialization();
         return Spark.port();
