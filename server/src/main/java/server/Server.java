@@ -5,21 +5,24 @@ import service.*;
 import spark.*;
 
 public class Server {
-    private ClearService clearService;
-    private ClearHandler clearHandler;
-
     private UserDAO userDAO;
     private GameDAO gameDAO;
     private AuthDAO authDAO;
 
+    private ClearService clearService;
     private UserService userService;
+    private GameService gameService;
+
+    private GameHandler gameHandler;
     private UserHandler userHandler;
     private SessionHandler sessionHandler;
+    private ClearHandler clearHandler;
 
     public Server() {
         userDAO = new MemoryUserDAO();
         authDAO = new MemoryAuthDAO();
         gameDAO = new MemoryGameDAO();
+
 
         clearService = new ClearService(userDAO, gameDAO, authDAO);
         clearHandler = new ClearHandler(clearService);
@@ -28,6 +31,9 @@ public class Server {
         userHandler = new UserHandler(userService);
 
         sessionHandler = new SessionHandler(userService);
+
+        gameService = new GameService(gameDAO, authDAO);
+        gameHandler = new GameHandler(gameService);
 
     }
     public int run(int desiredPort) {
@@ -39,6 +45,7 @@ public class Server {
         Spark.post("/user", userHandler::handleRegister);
         Spark.post("/session", sessionHandler::handleLogin);
         Spark.delete("/session", sessionHandler::handleLogout);
+        Spark.get("/game", gameHandler::handleListGames);
 
 
         Spark.awaitInitialization();
