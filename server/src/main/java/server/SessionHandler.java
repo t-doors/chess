@@ -36,4 +36,20 @@ public class SessionHandler {
             return String.format("{ \"message\": \"Error: %s\"}", e.getMessage());
         }
     }
+    public Object handleLogout(Request req, Response res) {
+        try {
+            String authToken = req.headers("authorization");
+            userService.logoutUser(authToken);
+
+            res.status(200);
+            return "{}";
+        } catch (UnauthorizedException e) {
+            res.status(401);
+            return "{ \"message\": \"Error: unauthorized\" }";
+        } catch (DataAccessException e) {
+            res.status(500);
+            return String.format("{ \"message\": \"Error: %s\"}", e.getMessage());
+        }
+    }
+
 }

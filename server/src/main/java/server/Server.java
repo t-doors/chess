@@ -38,6 +38,8 @@ public class Server {
         Spark.delete("/db", clearHandler::handleClear);
         Spark.post("/user", userHandler::handleRegister);
         Spark.post("/session", sessionHandler::handleLogin);
+        Spark.delete("/session", sessionHandler::handleLogout);
+
 
         Spark.awaitInitialization();
         return Spark.port();

@@ -60,4 +60,16 @@ public class UserService {
         return authData;
     }
 
+    public void logoutUser(String authToken) throws DataAccessException, UnauthorizedException {
+        if (authToken == null || authToken.isEmpty()) {
+            throw new UnauthorizedException("No authToken provided");
+        }
+
+        try {
+            authDAO.deleteAuth(authToken);
+        } catch (DataAccessException e) {
+            throw new UnauthorizedException("Invalid token");
+        }
+    }
+
 }
