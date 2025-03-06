@@ -40,4 +40,24 @@ public class UserService {
 
         return authData;
     }
+
+    public AuthData loginUser(UserData loginUser) throws DataAccessException, UnauthorizedException {
+        if (loginUser.username() == null || loginUser.username().isEmpty() ||
+                loginUser.password() == null || loginUser.password().isEmpty()) {
+            throw new UnauthorizedException("Missing username or password");
+        }
+
+        UserData existingUser = userDAO.getUser(loginUser.username());
+
+        if (!existingUser.password().equals(loginUser.password())) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
+
+        String token = UUID.randomUUID().toString();
+        AuthData authData = new AuthData(existingUser.username(), token);
+        authDAO.createAuth(authData);
+
+        return authData;
+    }
+
 }
