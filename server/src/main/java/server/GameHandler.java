@@ -37,4 +37,35 @@ public class GameHandler {
             return String.format("{ \"message\": \"Error: %s\" }", e.getMessage());
         }
     }
+
+    public Object handleCreateGame(Request req, Response res) {
+        try {
+            String authToken = req.headers("authorization");
+
+            record CreateGameRequest(String gameName) {}
+            CreateGameRequest createReq = new Gson().fromJson(req.body(), CreateGameRequest.class);
+
+            int newID = gameService.createGame(authToken, createReq.gameName());
+
+            res.status(200);
+            return "{ \"gameID\": %d }".formatted(newID);
+
+        } catch (BadRequestException e) {
+            res.status(400);
+            return "{ \"message\": \"Error: bad request\" }";
+
+        } catch (UnauthorizedException e) {
+            res.status(401);
+            return "{ \"message\": \"Error: unauthorized\" }";
+
+        } catch (DataAccessException e) {
+            res.status(500);
+            return "{ \"message\": \"Error: %s\"}".formatted(e.getMessage());
+
+        } catch (Exception e) {
+            res.status(500);
+            return "{ \"message\": \"Error: %s\"}".formatted(e.getMessage());
+        }
+    }
+
 }

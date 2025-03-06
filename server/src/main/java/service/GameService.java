@@ -26,4 +26,41 @@ public class GameService {
 
         return gameDAO.listGames();
     }
+
+    public int createGame(String authToken, String gameName)
+            throws UnauthorizedException, BadRequestException, DataAccessException {
+        if (authToken == null || authToken.isEmpty()) {
+            throw new UnauthorizedException("No auth token provided.");
+        }
+        authDAO.getAuth(authToken);
+
+        if (gameName == null || gameName.isEmpty()) {
+            throw new BadRequestException("No gameName provided.");
+        }
+
+        int gameID;
+        do {
+            gameID = (int) (Math.random() * 9999) + 1;
+
+        } while (gameDAOAlreadyHas(gameID));
+
+
+        GameData newGame = new GameData(gameID,
+                null, null,
+                gameName, null);
+
+        gameDAO.createGame(newGame);
+
+        return gameID;
+    }
+
+    private boolean gameDAOAlreadyHas(int gameID) {
+        try {
+            gameDAO.getGame(gameID);
+            return true;
+        } catch (DataAccessException ex) {
+            return false;
+        }
+    }
+
 }

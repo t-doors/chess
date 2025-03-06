@@ -10,13 +10,16 @@ public class Server {
     private AuthDAO authDAO;
 
     private ClearService clearService;
-    private UserService userService;
-    private GameService gameService;
-
-    private GameHandler gameHandler;
-    private UserHandler userHandler;
-    private SessionHandler sessionHandler;
     private ClearHandler clearHandler;
+
+    private UserService userService;
+    private UserHandler userHandler;
+
+    private GameService gameService;
+    private GameHandler gameHandler;
+
+    private SessionHandler sessionHandler;
+
 
     public Server() {
         userDAO = new MemoryUserDAO();
@@ -46,6 +49,7 @@ public class Server {
         Spark.post("/session", sessionHandler::handleLogin);
         Spark.delete("/session", sessionHandler::handleLogout);
         Spark.get("/game", gameHandler::handleListGames);
+        Spark.post("/game", gameHandler::handleCreateGame);
 
 
         Spark.awaitInitialization();
