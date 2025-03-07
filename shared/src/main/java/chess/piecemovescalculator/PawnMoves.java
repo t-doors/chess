@@ -31,23 +31,18 @@ public class PawnMoves extends MovesCalculator {
                     moves.add(new ChessMove(startPos, oneForward, null));
                 }
 
-                if ((isWhite && row == 2) || (!isWhite && row == 7)) {
+                boolean isStartingRow = (isWhite && row == 2) || (!isWhite && row == 7);
+                if (isStartingRow) {
                     int twoForwardRow = row + (2 * step);
-                    if (onBoard(twoForwardRow, col)) {
-                        ChessPosition twoForward = new ChessPosition(twoForwardRow, col);
-                        if (!occupied(board, twoForward)) {
-                            moves.add(new ChessMove(startPos, twoForward, null));
-                        }
+                    ChessPosition twoForward = new ChessPosition(twoForwardRow, col);
+                    if (onBoard(twoForwardRow, col) && !occupied(board, twoForward)) {
+                        moves.add(new ChessMove(startPos, twoForward, null));
                     }
                 }
             }
         }
 
-        int[][] diagonalOffsets = {
-                {step, -1},
-                {step, 1}
-        };
-
+        int[][] diagonalOffsets = {{step, -1}, {step, 1}};
         for (int[] offset : diagonalOffsets) {
             int newRow = row + offset[0];
             int newCol = col + offset[1];
@@ -64,7 +59,6 @@ public class PawnMoves extends MovesCalculator {
         }
         return moves;
     }
-
 
     private boolean isPromotionRank(int row, boolean isWhitePawn) {
         return (isWhitePawn && row == 8) || (!isWhitePawn && row == 1);

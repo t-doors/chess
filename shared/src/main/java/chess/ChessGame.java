@@ -199,10 +199,8 @@ public class ChessGame {
                 ChessPiece enemyPiece = theBoard.getPiece(enemyPos);
                 if (enemyPiece != null && enemyPiece.getTeamColor() != kingColor) {
                     Collection<ChessMove> enemyMoves = enemyPiece.pieceMoves(theBoard, enemyPos);
-                    for (ChessMove mov : enemyMoves) {
-                        if (mov.getEndPosition().equals(kingPos)) {
-                            return true;
-                        }
+                    if (enemyMoves.stream().anyMatch(mov -> mov.getEndPosition().equals(kingPos))) {
+                        return true;
                     }
                 }
             }
