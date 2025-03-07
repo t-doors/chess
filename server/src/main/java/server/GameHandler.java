@@ -41,14 +41,13 @@ public class GameHandler {
     public Object handleCreateGame(Request req, Response res) {
         try {
             String authToken = req.headers("authorization");
-
             record CreateGameRequest(String gameName) {}
             CreateGameRequest createReq = new Gson().fromJson(req.body(), CreateGameRequest.class);
 
-            int newID = gameService.createGame(authToken, createReq.gameName());
+            int gameID = gameService.createGame(authToken, createReq.gameName());
 
             res.status(200);
-            return "{ \"gameID\": %d }".formatted(newID);
+            return String.format("{ \"gameID\": %d }", gameID);
 
         } catch (BadRequestException e) {
             res.status(400);
@@ -60,13 +59,14 @@ public class GameHandler {
 
         } catch (DataAccessException e) {
             res.status(500);
-            return "{ \"message\": \"Error: %s\"}".formatted(e.getMessage());
+            return "{ \"message\": \"Error: %s\" }".formatted(e.getMessage());
 
         } catch (Exception e) {
             res.status(500);
-            return "{ \"message\": \"Error: %s\"}".formatted(e.getMessage());
+            return "{ \"message\": \"Error: %s\" }".formatted(e.getMessage());
         }
     }
+
 
     public Object handleJoinGame(Request req, Response res) {
         try {

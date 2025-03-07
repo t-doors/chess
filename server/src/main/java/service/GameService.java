@@ -30,8 +30,10 @@ public class GameService {
 
     public int createGame(String authToken, String gameName)
             throws UnauthorizedException, BadRequestException, DataAccessException {
-        if (authToken == null || authToken.isEmpty()) {
-            throw new UnauthorizedException("No auth token provided.");
+        try {
+            authDAO.getAuth(authToken);
+        } catch (DataAccessException ex) {
+            throw new UnauthorizedException("Invalid token");
         }
         authDAO.getAuth(authToken);
 
