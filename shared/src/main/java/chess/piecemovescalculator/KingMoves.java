@@ -5,7 +5,7 @@ import chess.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class kingMoves extends moveCalculator {
+public class KingMoves extends MoveCalculator {
 
     @Override
     public Collection<ChessMove> allPossibleMoves(ChessBoard board, ChessPosition startPos) {
