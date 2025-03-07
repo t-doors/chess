@@ -5,7 +5,7 @@ import chess.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class MoveCalculator {
+public class MovesCalculator {
 
     public Collection<ChessMove> allPossibleMoves(ChessBoard board, ChessPosition startPos) {
         return new ArrayList<>();

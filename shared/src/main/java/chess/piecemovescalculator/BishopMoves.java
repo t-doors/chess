@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 
-public class BishopMoves extends MoveCalculator {
+public class BishopMoves extends MovesCalculator {
 
     @Override
     public Collection<ChessMove> allPossibleMoves(ChessBoard board, ChessPosition startPos) {

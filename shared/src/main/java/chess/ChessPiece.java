@@ -63,7 +63,7 @@ public class ChessPiece {
             case KNIGHT -> new KnightMoves().allPossibleMoves(board, myPosition);
             case PAWN -> new PawnMoves().allPossibleMoves(board, myPosition);
             case ROOK -> new RookMoves().allPossibleMoves(board, myPosition);
-            default -> new MoveCalculator().allPossibleMoves(board, myPosition);
+            default -> new MovesCalculator().allPossibleMoves(board, myPosition);
         };
     }
     @Override
