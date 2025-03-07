@@ -23,7 +23,11 @@ public class GameService {
             throw new UnauthorizedException("Missing authToken");
         }
 
-        authDAO.getAuth(authToken);
+        try {
+            authDAO.getAuth(authToken);
+        } catch (DataAccessException ex) {
+            throw new UnauthorizedException("Invalid token");
+        }
 
         return gameDAO.listGames();
     }
