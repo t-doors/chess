@@ -67,14 +67,26 @@ public class GameService {
     }
 
     public boolean joinGame(String authToken, int gameID, String requestedColor)
-            throws UnauthorizedException, DataAccessException, BadRequestException {
+            throws UnauthorizedException, DataAccessException, BadRequestException{
 
         if (authToken == null || authToken.isEmpty()) {
-            throw new UnauthorizedException("No auth token found");
+            throw new UnauthorizedException("No token provided");
         }
-        AuthData authData = authDAO.getAuth(authToken);
 
-        GameData game = gameDAO.getGame(gameID);
+
+        AuthData authData;
+        try {
+            authData = authDAO.getAuth(authToken);
+        } catch (DataAccessException ex) {
+            throw new UnauthorizedException("Invalid token");
+        }
+
+        GameData game;
+        try {
+            game = gameDAO.getGame(gameID);
+        } catch (DataAccessException ex) {
+            throw new BadRequestException("Game not found: " + gameID);
+        }
 
         if (requestedColor == null) {
             throw new BadRequestException("No color specified");

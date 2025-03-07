@@ -78,11 +78,9 @@ public class GameHandler {
             boolean success = gameService.joinGame(authToken, body.gameID(), body.playerColor());
 
             if (success) {
-                // success => 200 {}
                 res.status(200);
                 return "{}";
             } else {
-                // color spot is taken => 403
                 res.status(403);
                 return "{ \"message\": \"Error: already taken\" }";
             }
@@ -100,6 +98,8 @@ public class GameHandler {
             return String.format("{ \"message\": \"Error: %s\"}", e.getMessage());
         }
     }
+
+
 
 
 }
