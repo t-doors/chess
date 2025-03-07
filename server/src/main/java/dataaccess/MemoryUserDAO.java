@@ -1,4 +1,4 @@
-package dataAccess;
+package dataaccess;
 
 import model.UserData;
 
@@ -8,7 +8,7 @@ import java.util.HashMap;
  * In-memory implementation of UserDAO
  * using a HashMap to store users keyed by username.
  */
-public class MemoryUserDAO implements dataAccess.UserDAO {
+public class MemoryUserDAO implements dataaccess.UserDAO {
 
     private final HashMap<String, UserData> userMap;
 
