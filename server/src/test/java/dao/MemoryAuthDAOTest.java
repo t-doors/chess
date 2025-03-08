@@ -91,4 +91,18 @@ public class MemoryAuthDAOTest {
         authDAO.clear();
         assertDoesNotThrow(() -> authDAO.clear());
     }
+    @Test
+    @DisplayName("getAuth - Negative (missing token)")
+    void getAuthMissingToken() {
+        assertThrows(DataAccessException.class, () -> {
+            authDAO.getAuth("fakeToken");
+        });
+    }
+    @Test
+    @DisplayName("clear - Negative or trivial")
+    void clearEmptyDB() {
+        assertDoesNotThrow(() -> authDAO.clear());
+    }
+
+
 }

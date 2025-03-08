@@ -81,4 +81,14 @@ public class UserServiceTest {
             userService.loginUser(badPass);
         });
     }
+
+    @Test
+    @DisplayName("registerUser - Negative (empty username => bad request)")
+    void registerUserEmptyUsername() {
+        UserData user = new UserData("", "pw", "some@mail.com");
+        assertThrows(BadRequestException.class, () -> {
+            userService.registerUser(user);
+        });
+    }
+
 }
