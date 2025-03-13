@@ -3,6 +3,7 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -263,6 +264,19 @@ public class ChessGame {
         return false;
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ChessGame other)) return false;
+        return currentTurn == other.currentTurn
+                && Objects.equals(board, other.board);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(board, currentTurn);
+    }
 
 }
 
