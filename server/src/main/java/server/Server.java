@@ -23,7 +23,7 @@ public class Server {
 
     public Server() {
         userDAO = new MemoryUserDAO();
-        authDAO = new MemoryAuthDAO();
+        authDAO = new AuthDAOSQL();
         gameDAO = new MemoryGameDAO();
 
 
