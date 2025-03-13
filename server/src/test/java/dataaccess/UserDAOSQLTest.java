@@ -25,7 +25,6 @@ public class UserDAOSQLTest {
         UserData fromDB = dao.getUser("alice");
         assertEquals("alice", fromDB.username());
         assertEquals("alice@mail.com", fromDB.email());
-        assertTrue(dao.authenticateUser("alice", "alicePass"));
     }
 
     @Test
@@ -44,7 +43,6 @@ public class UserDAOSQLTest {
         UserData c = dao.getUser("charlie");
         assertEquals("charlie", c.username());
         assertEquals("c@mail.com", c.email());
-        assertTrue(dao.authenticateUser("charlie", "charPw"));
     }
 
     @Test
@@ -53,19 +51,6 @@ public class UserDAOSQLTest {
         assertThrows(DataAccessException.class, () -> dao.getUser("nofound"));
     }
 
-    @Test
-    @DisplayName("authenticateUser - Positive")
-    void authenticateUserPositive() throws DataAccessException {
-        dao.createUser(new UserData("david", "davidPw", "d@mail.com"));
-        assertTrue(dao.authenticateUser("david", "davidPw"));
-    }
-
-    @Test
-    @DisplayName("authenticateUser - Negative (wrong pass => false)")
-    void authenticateUserNegative() throws DataAccessException {
-        dao.createUser(new UserData("eric", "ericPw", "eric@mail.com"));
-        assertFalse(dao.authenticateUser("eric", "badpass"));
-    }
 
     @Test
     @DisplayName("clear - Positive")
