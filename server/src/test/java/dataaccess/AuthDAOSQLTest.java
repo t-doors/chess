@@ -61,9 +61,8 @@ public class AuthDAOSQLTest {
     }
 
     @Test
-    @DisplayName("deleteAuth - Negative (no record => no throw)")
     void deleteAuthNegative() {
-        assertDoesNotThrow(() -> dao.deleteAuth("unknown"));
+        assertThrows(DataAccessException.class, () -> dao.deleteAuth("unknown"));
     }
 
     @Test

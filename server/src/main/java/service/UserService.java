@@ -66,10 +66,11 @@ public class UserService {
         }
 
         try {
-            authDAO.deleteAuth(authToken);
-        } catch (DataAccessException e) {
+            authDAO.getAuth(authToken);
+        } catch (DataAccessException ex) {
             throw new UnauthorizedException("Invalid token");
         }
+        authDAO.deleteAuth(authToken);
     }
 
 }
