@@ -55,33 +55,6 @@ public class UserServiceTest {
     }
 
 
-    /* @Test
-    @DisplayName("loginUser - Positive (correct credentials)")
-    void loginUserPositive() throws DataAccessException, UserAlreadyExistsException, BadRequestException {
-        userService.registerUser(new UserData("charlie", "charpw", "char@mail.com"));
-
-        try {
-            AuthData authResult = userService.loginUser(new UserData("charlie", "charpw", "char@mail.com"));
-
-            assertNotNull(authResult, "AuthData should not be null on success");
-            assertEquals("charlie", authResult.username(), "Usernames should match");
-            assertNotNull(authResult.authToken(), "Token should not be null");
-        } catch (UnauthorizedException e) {
-            fail("Should not throw UnauthorizedException for correct credentials");
-        }
-    }
-
-    @Test
-    @DisplayName("loginUser - Negative (wrong password => unauthorized)")
-    void loginUserNegative() throws DataAccessException, UserAlreadyExistsException, BadRequestException {
-        userService.registerUser(new UserData("david", "davidpw", "david@mail.com"));
-
-        UserData badPass = new UserData("david", "incorrect", "david@mail.com");
-        assertThrows(UnauthorizedException.class, () -> {
-            userService.loginUser(badPass);
-        });
-    } */
-
     @Test
     @DisplayName("registerUser - Negative (empty username => bad request)")
     void registerUserEmptyUsername() {
