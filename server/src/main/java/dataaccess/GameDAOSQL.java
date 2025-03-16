@@ -155,12 +155,16 @@ public class GameDAOSQL implements GameDAO {
     }
 
     private String serializeChessGame(ChessGame cg) {
-        if (cg == null) return null;
+        if (cg == null) {
+            return null;
+        }
         return new Gson().toJson(cg);
     }
 
     private ChessGame deserializeChessGame(String json) {
-        if (json == null) return null;
+        if (json == null){
+            return null;
+        }
         return new Gson().fromJson(json, ChessGame.class);
     }
 }
