@@ -35,7 +35,7 @@ public class AuthDAOSQL implements AuthDAO {
     }
 
     @Override
-    public void createAuth(AuthData authData) {
+    public void createAuth(AuthData authData) throws DataAccessException {
         String sql = "INSERT INTO auth_table (authToken, username) VALUES (?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -44,9 +44,14 @@ public class AuthDAOSQL implements AuthDAO {
             stmt.setString(2, authData.username());
             stmt.executeUpdate();
 
-        } catch (SQLException | DataAccessException e) {
+        } catch (SQLException e) {
+            if (e.getMessage() != null && e.getMessage().contains("Duplicate entry")) {
+                return;
+            }
+            throw new DataAccessException("Failed to create auth token: " + e.getMessage());
         }
     }
+
 
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {

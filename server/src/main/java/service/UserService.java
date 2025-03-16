@@ -3,6 +3,7 @@ package service;
 import dataaccess.*;
 import model.AuthData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.UUID;
 
@@ -49,7 +50,7 @@ public class UserService {
 
         UserData existingUser = userDAO.getUser(loginUser.username());
 
-        if (!existingUser.password().equals(loginUser.password())) {
+        if (!BCrypt.checkpw(loginUser.password(), existingUser.password())) {
             throw new UnauthorizedException("Invalid credentials");
         }
 
