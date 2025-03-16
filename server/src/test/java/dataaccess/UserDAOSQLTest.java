@@ -64,11 +64,11 @@ public class UserDAOSQLTest {
     @Test
     @DisplayName("Password Hashing Verification")
     void passwordHashing() throws DataAccessException {
-        String Password = "testPass123";
-        UserData user = new UserData("testUser", Password, "test@mail.com");
+        String pw = "testPass123";
+        UserData user = new UserData("testUser", pw, "test@mail.com");
         dao.createUser(user);
 
         UserData fromDB = dao.getUser("testUser");
-        assertTrue(BCrypt.checkpw(Password, fromDB.password()));
+        assertTrue(BCrypt.checkpw(pw, fromDB.password()));
     }
 }
