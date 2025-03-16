@@ -2,6 +2,7 @@ package dataaccess;
 
 import model.UserData;
 import org.junit.jupiter.api.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -58,5 +59,16 @@ public class UserDAOSQLTest {
         dao.createUser(new UserData("frank","frankPw","f@mail.com"));
         dao.clear();
         assertThrows(DataAccessException.class, () -> dao.getUser("frank"));
+    }
+
+    @Test
+    @DisplayName("Password Hashing Verification")
+    void passwordHashing() throws DataAccessException {
+        String Password = "testPass123";
+        UserData user = new UserData("testUser", Password, "test@mail.com");
+        dao.createUser(user);
+
+        UserData fromDB = dao.getUser("testUser");
+        assertTrue(BCrypt.checkpw(Password, fromDB.password()));
     }
 }
