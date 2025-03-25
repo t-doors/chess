@@ -1,7 +1,12 @@
 package client;
 
-import java.util.*;
+import com.google.gson.Gson;
 
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
 
 public class ServerAccess {
 
@@ -11,10 +16,6 @@ public class ServerAccess {
     public ServerAccess(String baseUrl) {
         this.baseUrl = baseUrl;
         this.authToken = null;
-    }
-
-    public Map<String,Object> doCall(String method, String endpoint, Object body) {
-        return new HashMap<>();
     }
 
     public boolean register(String username, String password, String email) {
@@ -89,5 +90,54 @@ public class ServerAccess {
         }
         Map<String,Object> resp = doCall("PUT", "/game", payload);
         return !resp.containsKey("Error") && !resp.containsKey("message");
+    }
+
+    private Map<String,Object> doCall(String method, String endpoint, Object body) {
+        Map<String,Object> out = new HashMap<>();
+        try {
+            URI uri = new URI(baseUrl + endpoint);
+            HttpURLConnection http = (HttpURLConnection) uri.toURL().openConnection();
+            http.setRequestMethod(method);
+
+            if (authToken != null) {
+                http.setRequestProperty("authorization", authToken);
+            }
+
+            if (body != null) {
+                http.setDoOutput(true);
+                http.setRequestProperty("Content-Type","application/json");
+            }
+
+            http.connect();
+
+            if (body != null) {
+                String json = new Gson().toJson(body);
+                try(OutputStream os = http.getOutputStream()) {
+                    os.write(json.getBytes());
+                }
+            }
+
+            int code = http.getResponseCode();
+            if (code >= 400) {
+                try (InputStream err = http.getErrorStream()) {
+                    if (err != null) {
+                        var parsed = new Gson().fromJson(new InputStreamReader(err), Map.class);
+                        if (parsed == null) parsed = new HashMap<>();
+                        out.putAll(parsed);
+                    }
+                }
+                out.put("Error","HTTP " + code);
+                return out;
+            }
+            try (InputStream in = http.getInputStream();
+                 InputStreamReader rdr = new InputStreamReader(in)) {
+                Map<String,Object> parsed = new Gson().fromJson(rdr, Map.class);
+                if (parsed == null) parsed = new HashMap<>();
+                return parsed;
+            }
+        } catch (URISyntaxException | IOException e) {
+            out.put("Error", e.getMessage());
+            return out;
+        }
     }
 }
