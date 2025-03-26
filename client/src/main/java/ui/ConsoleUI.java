@@ -183,9 +183,6 @@ public class ConsoleUI {
         new Board().drawChessBoard(blackView);
     }
 
-    private boolean isValidIndex(int idx) {
-        return idx >= 1 && idx <= cachedGames.size();
-    }
     private void doObserve(String line) {
         String[] parts = line.split("\\s+");
         if (parts.length < 2) {
