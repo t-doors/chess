@@ -9,7 +9,6 @@ import java.net.URISyntaxException;
 import java.util.*;
 
 public class ServerAccess {
-
     private final String baseUrl;
     private String authToken;
 
@@ -18,11 +17,10 @@ public class ServerAccess {
         this.authToken = null;
     }
 
-    public boolean register(String username, String password, String email) {
-        Map<String,Object> resp = doCall("POST", "/user", Map.of(
-                "username", username,
-                "password", password,
-                "email", email
+
+    public boolean register(String user, String pass, String email) {
+        var resp = doCall("POST","/user", Map.of(
+                "username",user, "password",pass, "email",email
         ));
         if (resp.containsKey("authToken")) {
             authToken = (String) resp.get("authToken");
@@ -31,31 +29,28 @@ public class ServerAccess {
         return false;
     }
 
-    public boolean login(String username, String password) {
-        Map<String, Object> payload = Map.of(
-                "username", username,
-                "password", password
-        );
-
-        Map<String, Object> resp = doCall("POST", "/session", payload);
+    public boolean login(String user, String pass) {
+        var resp = doCall("POST","/session", Map.of(
+                "username", user, "password", pass
+        ));
         if (resp.containsKey("authToken")) {
-            this.authToken = (String) resp.get("authToken");
+            authToken = (String) resp.get("authToken");
             return true;
         }
         return false;
     }
 
     public boolean logout() {
-        Map<String, Object> resp = doCall("DELETE", "/session", null);
+        var resp = doCall("DELETE","/session", null);
         if (resp.containsKey("Error")) {
             return false;
         }
-        this.authToken = null;
-        return true;
+        authToken = null;
+        return !resp.containsKey("message");
     }
 
     public int createGame(String gameName) {
-        Map<String,Object> resp = doCall("POST", "/game", Map.of("gameName", gameName));
+        var resp = doCall("POST","/game", Map.of("gameName", gameName));
         if (resp.containsKey("gameID")) {
             double d = (double) resp.get("gameID");
             return (int)d;
@@ -64,77 +59,79 @@ public class ServerAccess {
     }
 
     public List<Map<String,Object>> listGames() {
-        Map<String,Object> resp = doCall("GET", "/game", null);
+        var resp = doCall("GET","/game",null);
         if (resp.containsKey("games")) {
-            Object gObj = resp.get("games");
-            if (gObj instanceof List<?> list) {
-                List<Map<String,Object>> res = new ArrayList<>();
+            Object raw = resp.get("games");
+            if (raw instanceof List<?> list) {
+                List<Map<String,Object>> result = new ArrayList<>();
                 for (Object itm : list) {
                     if (itm instanceof Map<?,?> mp) {
                         var casted = new HashMap<String,Object>();
                         mp.forEach((k,v)-> casted.put(k.toString(), v));
-                        res.add(casted);
+                        result.add(casted);
                     }
                 }
-                return res;
+                return result;
             }
         }
         return List.of();
     }
 
     public boolean joinGame(int gameID, String color) {
-        Map<String,Object> payload = new HashMap<>();
-        payload.put("gameID", gameID);
-        if (color != null) {
-            payload.put("playerColor", color.toUpperCase());
+        Map<String,Object> body = new HashMap<>();
+        body.put("gameID",(double)gameID);
+        if (color!=null) {
+            body.put("playerColor", color.toUpperCase());
         }
-        Map<String,Object> resp = doCall("PUT", "/game", payload);
+        var resp = doCall("PUT","/game", body);
         return !resp.containsKey("Error") && !resp.containsKey("message");
     }
 
-    private Map<String,Object> doCall(String method, String endpoint, Object body) {
+    public void clear() {
+        doCall("DELETE", "/db", null);
+    }
+
+
+    private Map<String,Object> doCall(String method, String endpoint, Object payload) {
         Map<String,Object> out = new HashMap<>();
         try {
             URI uri = new URI(baseUrl + endpoint);
             HttpURLConnection http = (HttpURLConnection) uri.toURL().openConnection();
             http.setRequestMethod(method);
 
-            if (authToken != null) {
-                http.setRequestProperty("authorization", authToken);
+            if (authToken!=null) {
+                http.setRequestProperty("Authorization", authToken);
             }
-
-            if (body != null) {
+            if (payload!=null) {
                 http.setDoOutput(true);
                 http.setRequestProperty("Content-Type","application/json");
             }
-
             http.connect();
 
-            if (body != null) {
-                String json = new Gson().toJson(body);
+            if (payload!=null) {
+                String json = new Gson().toJson(payload);
                 try(OutputStream os = http.getOutputStream()) {
                     os.write(json.getBytes());
                 }
             }
 
             int code = http.getResponseCode();
-            if (code >= 400) {
-                try (InputStream err = http.getErrorStream()) {
-                    if (err != null) {
-                        var parsed = new Gson().fromJson(new InputStreamReader(err), Map.class);
-                        if (parsed == null) parsed = new HashMap<>();
-                        out.putAll(parsed);
+            if (code >=400) {
+                try(InputStream err = http.getErrorStream()) {
+                    if (err!=null) {
+                        var eMap = new Gson().fromJson(new InputStreamReader(err), Map.class);
+                        if (eMap!=null) out.putAll(eMap);
                     }
                 }
                 out.put("Error","HTTP " + code);
                 return out;
             }
-            try (InputStream in = http.getInputStream();
-                 InputStreamReader rdr = new InputStreamReader(in)) {
-                Map<String,Object> parsed = new Gson().fromJson(rdr, Map.class);
-                if (parsed == null) parsed = new HashMap<>();
-                return parsed;
+            try(InputStream in = http.getInputStream()) {
+                var parsed = new Gson().fromJson(new InputStreamReader(in), Map.class);
+                if (parsed!=null) out.putAll(parsed);
             }
+            return out;
+
         } catch (URISyntaxException | IOException e) {
             out.put("Error", e.getMessage());
             return out;
