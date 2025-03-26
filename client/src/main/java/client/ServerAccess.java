@@ -127,7 +127,9 @@ public class ServerAccess {
             }
             try(InputStream in = http.getInputStream()) {
                 var parsed = new Gson().fromJson(new InputStreamReader(in), Map.class);
-                if (parsed!=null) out.putAll(parsed);
+                if (parsed!=null) {
+                    out.putAll(parsed);
+                }
             }
             return out;
 
