@@ -1,6 +1,7 @@
 package client;
 
 import org.junit.jupiter.api.*;
+import server.Server;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -8,16 +9,23 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ServerFacadeTests {
 
+    private static Server server;
     private static ServerAccess access;
 
     @BeforeAll
     static void init() {
-
-        int port = 8080;
-
+        server = new Server();
+        int port = server.run(0);
         access = new ServerAccess("http://localhost:" + port);
+    }
 
-        System.out.println("ServerAccessTest init: using port " + port);
+    @AfterAll
+    static void tearDown() {
+        server.stop();
+    }
+    @BeforeEach
+    void clearDatabase() {
+        access.clear();
     }
 
 
