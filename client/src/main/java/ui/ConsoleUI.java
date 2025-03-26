@@ -20,7 +20,7 @@ public class ConsoleUI {
     }
 
     public void run() {
-        System.out.println("Welcome to Chess. Type 'help' for usage.");
+        System.out.println("Welcome to Chess Amigo. Type 'help' to begin.");
         while (state != State.EXIT) {
             switch (state) {
                 case PRELOGIN -> handlePrelogin();
@@ -33,7 +33,9 @@ public class ConsoleUI {
     private void handlePrelogin() {
         System.out.print("\n[prelogin] >>> ");
         String line = scanner.nextLine().trim();
-        if (line.isEmpty()) return;
+        if (line.isEmpty()){
+            return;
+        }
         String[] tokens = line.split("\\s+");
         String cmd = tokens[0].toLowerCase();
 
@@ -50,7 +52,7 @@ public class ConsoleUI {
                     System.out.println("Registered & logged in!");
                     state = State.POSTLOGIN;
                 } else {
-                    System.out.println("Register failed (username in use?).");
+                    System.out.println("Register failed.");
                 }
             }
             case "login" -> {
@@ -73,8 +75,8 @@ public class ConsoleUI {
     private void printPreloginHelp() {
         System.out.println("""
             Prelogin commands:
-              register <USER> <PASS> <EMAIL>
-              login <USER> <PASS>
+              register <USERNAME> <PASSWORD> <EMAIL>
+              login <USERNAME> <PASSWORD>
               quit
               help
         """);
@@ -83,7 +85,9 @@ public class ConsoleUI {
     private void handlePostlogin() {
         System.out.print("\n[postlogin] >>> ");
         String line = scanner.nextLine().trim();
-        if (line.isEmpty()) return;
+        if (line.isEmpty()) {
+            return;
+        }
         String[] tokens = line.split("\\s+",2);
         String cmd = tokens[0].toLowerCase();
 
@@ -179,6 +183,9 @@ public class ConsoleUI {
         new Board().drawChessBoard(blackView);
     }
 
+    private boolean isValidIndex(int idx) {
+        return idx >= 1 && idx <= cachedGames.size();
+    }
     private void doObserve(String line) {
         String[] parts = line.split("\\s+");
         if (parts.length < 2) {

@@ -116,14 +116,13 @@ public class ServerAccess {
             }
 
             int code = http.getResponseCode();
-            if (code >=400) {
-                try(InputStream err = http.getErrorStream()) {
-                    if (err!=null) {
-                        var eMap = new Gson().fromJson(new InputStreamReader(err), Map.class);
-                        if (eMap!=null) out.putAll(eMap);
+            if (code >= 400) {
+                try (InputStream err = http.getErrorStream()) {
+                    if (err != null && new Gson().fromJson(new InputStreamReader(err), Map.class) instanceof Map eMap) {
+                        out.putAll(eMap);
                     }
                 }
-                out.put("Error","HTTP " + code);
+                out.put("Error", "HTTP " + code);
                 return out;
             }
             try(InputStream in = http.getInputStream()) {

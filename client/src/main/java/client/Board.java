@@ -72,7 +72,9 @@ public class Board {
     }
 
     private String getTextColor(int chessRow, String piece) {
-        if (piece.equals(EMPTY)) return RESET_TEXT_COLOR;
+        if (piece.equals(EMPTY)) {
+            return RESET_TEXT_COLOR;
+        }
         return piece.contains("WHITE") ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_BLUE;
     }
 }
