@@ -2,7 +2,7 @@ package client;
 
 import ui.ConsoleUI;
 
-public class Main {
+public class ClientMain {
     public static void main(String[] args) {
         String baseUrl = "http://localhost:8080";
         if (args.length == 1) {
