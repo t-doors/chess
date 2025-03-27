@@ -6,75 +6,148 @@ public class Board {
     public void drawChessBoard(boolean blackView) {
         System.out.print(ERASE_SCREEN);
 
-        if (blackView) {
-            for (int row = 1; row <= 8; row++) {
-                printRow(row, true);
+        if (!blackView) {
+            for (int row = 8; row >= 1; row--) {
+                printRowWhiteView(row);
             }
-            System.out.println("   h  g  f  e  d  c  b  a");
+            printColumnsWhite();
         } else {
             for (int row = 8; row >= 1; row--) {
-                printRow(row, false);
+                printRowBlackView(row);
             }
-            System.out.println("   a  b  c  d  e  f  g  h");
+            printColumnsBlack();
         }
 
         System.out.print(RESET_BG_COLOR + RESET_TEXT_COLOR);
     }
 
-    private void printRow(int row, boolean blackView) {
+    private void printRowWhiteView(int row) {
         System.out.printf("%2d ", row);
-        if (blackView) {
-            for (int col = 8; col >= 1; col--) {
-                printSquare(row, col,true);
-            }
-        } else {
-            for (int col = 1; col <= 8; col++) {
-                printSquare(row, col, false);
-            }
+
+        for (int col = 1; col <= 8; col++) {
+            printSquareWhiteView(row, col);
         }
         System.out.println(RESET_BG_COLOR);
     }
 
-    private void printSquare(int row, int col, boolean blackView) {
+    private void printSquareWhiteView(int row, int col) {
         boolean dark = ((row + col) % 2 == 0);
-        if (dark) {
-            System.out.print(SET_BG_COLOR_BLUE);
-        } else {
-            System.out.print(SET_BG_COLOR_LIGHT_GREY);
-        }
+        System.out.print(dark ? SET_BG_COLOR_MAGENTA : SET_BG_COLOR_LIGHT_GREY);
 
-        int chessRow = blackView ? (9 - row) : row;
-        int chessColumn = blackView ? (9 - col) : col;
+        String piece = getPieceWhitePerspective(row, col);
+        String textColor = getTextColor(piece);
 
-        String piece = getPiece(chessRow, chessColumn);
-        String textColor = getTextColor(chessRow, piece);
-
-        System.out.print(textColor + piece + RESET_TEXT_COLOR);
+        String cell = piece.isEmpty() ? "   " : " " + piece + " ";
+        System.out.print(textColor + cell + RESET_TEXT_COLOR);
     }
 
-    private String getPiece(int chessRow, int chessColumn) {
-        if (chessRow == 1 || chessRow == 8) {
-            return switch (chessColumn) {
-                case 1, 8 -> chessRow == 1 ? BLACK_ROOK : WHITE_ROOK;
-                case 2, 7 -> chessRow == 1 ? BLACK_KNIGHT : WHITE_KNIGHT;
-                case 3, 6 -> chessRow == 1 ? BLACK_BISHOP : WHITE_BISHOP;
-                case 4 -> chessRow == 1 ? BLACK_QUEEN : WHITE_QUEEN;
-                case 5 -> chessRow == 1 ? BLACK_KING : WHITE_KING;
-                default -> EMPTY;
+    private String getPieceWhitePerspective(int r, int c) {
+        if (r == 1) {
+            return switch (c) {
+                case 1, 8 -> "R";
+                case 2, 7 -> "N";
+                case 3, 6 -> "B";
+                case 4 -> "Q";
+                case 5 -> "K";
+                default -> "";
             };
-        } else if (chessRow == 2) {
-            return BLACK_PAWN;
-        } else if (chessRow == 7) {
-            return WHITE_PAWN;
-        } else {
-            return EMPTY;
         }
+        if (r == 2) {
+            return "P";
+        }
+        if (r == 7) {
+            return "p";
+        }
+        if (r == 8) {
+            return switch (c) {
+                case 1, 8 -> "r";
+                case 2, 7 -> "n";
+                case 3, 6 -> "b";
+                case 4 -> "q";
+                case 5 -> "k";
+                default -> "";
+            };
+        }
+        return "";
     }
 
-    private String getTextColor(int chessRow, String piece) {
-        if (piece.equals(EMPTY)) {
+    private void printColumnsWhite() {
+        System.out.print("   ");
+        for (char c = 'a'; c <= 'h'; c++) {
+            System.out.printf(" %c ", c);
+        }
+        System.out.println();
+    }
+
+    private void printRowBlackView(int row) {
+        int label = 9 - row;
+        System.out.printf("%2d ", label);
+
+        for (int col = 8; col >= 1; col--) {
+            printSquareBlackView(row, col);
+        }
+        System.out.println(RESET_BG_COLOR);
+    }
+
+
+    private void printSquareBlackView(int row, int col) {
+        boolean dark = ((row + col) % 2 == 1);
+        System.out.print(dark ? SET_BG_COLOR_MAGENTA : SET_BG_COLOR_LIGHT_GREY);
+
+        String piece = getPieceBlackPerspective(row, col);
+        String textColor = getTextColor(piece);
+        String cell = piece.isEmpty() ? "   " : " " + piece + " ";
+
+        System.out.print(textColor + cell + RESET_TEXT_COLOR);
+    }
+
+
+    private String getPieceBlackPerspective(int r, int c) {
+        if (r == 1) {
+            return switch (c) {
+                case 1, 8 -> "r";
+                case 2, 7 -> "n";
+                case 3, 6 -> "b";
+                case 4 -> "q";
+                case 5 -> "k";
+                default -> "";
+            };
+        }
+        if (r == 2) {
+            return "p";
+        }
+        if (r == 7) {
+            return "P";
+        }
+        if (r == 8) {
+            return switch (c) {
+                case 1, 8 -> "R";
+                case 2, 7 -> "N";
+                case 3, 6 -> "B";
+                case 4 -> "Q";
+                case 5 -> "K";
+                default -> "";
+            };
+        }
+        return "";
+    }
+
+    private void printColumnsBlack() {
+        System.out.print("   ");
+        for (char c = 'h'; c >= 'a'; c--) {
+            System.out.printf(" %c ", c);
+        }
+        System.out.println();
+    }
+
+    private String getTextColor(String piece) {
+        if (piece.isEmpty()) {
             return RESET_TEXT_COLOR;
         }
-        return piece.contains("WHITE") ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_BLUE;
+        if (Character.isUpperCase(piece.charAt(0))) {
+            return SET_TEXT_COLOR_WHITE;
+        } else {
+            return SET_TEXT_COLOR_BLACK;
+        }
     }
 }
