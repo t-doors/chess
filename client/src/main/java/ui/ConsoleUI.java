@@ -20,14 +20,14 @@ public class ConsoleUI {
     }
 
     public void run() {
-        System.out.println("Welcome to Chess Amigo. Type 'help' to begin.");
+        System.out.println(" ♕ Welcome to Chess Amigo ♕ Type 'help' for instructions.");
         while (state != State.EXIT) {
             switch (state) {
                 case PRELOGIN -> handlePrelogin();
                 case POSTLOGIN -> handlePostlogin();
             }
         }
-        System.out.println("Exiting console UI. Adios.");
+        System.out.println("♕ Exiting Chess UI ♕ Adios amigo.");
     }
 
     private void handlePrelogin() {
@@ -52,7 +52,7 @@ public class ConsoleUI {
                     System.out.println("Registered & logged in!");
                     state = State.POSTLOGIN;
                 } else {
-                    System.out.println("Register failed.");
+                    System.out.println("Register failed :( Username already taken?");
                 }
             }
             case "login" -> {
@@ -65,10 +65,10 @@ public class ConsoleUI {
                     System.out.println("Login success!");
                     state = State.POSTLOGIN;
                 } else {
-                    System.out.println("Login failed (user not found or wrong pass).");
+                    System.out.println("Login failed: user not found or wrong password :(");
                 }
             }
-            default -> System.out.println("Unknown command. 'help' or 'quit'.");
+            default -> System.out.println("Unknown command. Type 'help' or 'quit'.");
         }
     }
 
@@ -97,7 +97,7 @@ public class ConsoleUI {
             case "logout" -> {
                 boolean ok = server.logout();
                 if (!ok) {
-                    System.out.println("Logout might have failed or no session. Returning to prelogin anyway.");
+                    System.out.println("Logout failure or no session. Returning to prelogin.");
                 }
                 state = State.PRELOGIN;
             }
@@ -105,7 +105,7 @@ public class ConsoleUI {
             case "list" -> doList();
             case "join" -> doJoin(line);
             case "observe" -> doObserve(line);
-            default -> System.out.println("Unknown postlogin command. 'help' or 'quit'.");
+            default -> System.out.println("Unknown postlogin command. Type 'help' or 'quit'.");
         }
     }
 
@@ -115,7 +115,7 @@ public class ConsoleUI {
               create <NAME>           (create a new game)
               list                    (list all games)
               join <INDEX> <COLOR>    (join a game as WHITE or BLACK)
-              observe <INDEX>         (observe a game from White's perspective)
+              observe <INDEX>         (observe a game from the White perspective)
               logout
               quit
               help
@@ -130,9 +130,9 @@ public class ConsoleUI {
         String gameName = tokens[1];
         int gID = server.createGame(gameName);
         if (gID >= 0) {
-            System.out.println("Created game '" + gameName + "' with ID=" + gID);
+            System.out.println("Created game '" + gameName + "'");
         } else {
-            System.out.println("Create game failed (maybe unauthorized?).");
+            System.out.println("Failed to create game (maybe unauthorized?).");
         }
     }
 
@@ -150,8 +150,11 @@ public class ConsoleUI {
             String name = (String) g.getOrDefault("gameName","(no name)");
             String w = (String) g.getOrDefault("whiteUsername","(open)");
             String b = (String) g.getOrDefault("blackUsername","(open)");
-            System.out.printf("%2d) gameID=%d, name=%s, white=%s, black=%s%n", i+1, gameID, name, w, b);
+            System.out.printf("%2d) name: %s, white: %s, black: %s%n", i+1, name, w, b);
         }
+    }
+    private boolean isValidIndex(int idx) {
+        return idx >= 1 && idx <= cachedGames.size();
     }
 
     private void doJoin(String line) {
@@ -161,26 +164,40 @@ public class ConsoleUI {
             return;
         }
         int idx;
-        try { idx = Integer.parseInt(parts[1]); }
-        catch (NumberFormatException e) {
-            System.out.println("join: invalid index");
+        try {
+            idx = Integer.parseInt(parts[1]);
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Invalid index format");
             return;
         }
-        if (idx<1 || idx>cachedGames.size()) {
-            System.out.println("Index out of range. 'list' first?");
+
+        if (!isValidIndex(idx)) {
+            System.out.println("Error: Index out of range. Use 'list' to see valid games.");
             return;
         }
-        String color = parts[2];
-        double d = (double) cachedGames.get(idx-1).get("gameID");
-        int gameID = (int)d;
-        boolean ok = server.joinGame(gameID,color);
-        if (!ok) {
-            System.out.println("join failed (color taken or invalid?).");
+
+        String color = parts[2].toUpperCase();
+        if (!color.equals("WHITE") && !color.equals("BLACK")) {
+            System.out.println("Error: Invalid color. Use 'WHITE' or 'BLACK'.");
             return;
         }
-        System.out.println("Joined game as " + color + ". Let's show the board:");
-        boolean blackView = color.equalsIgnoreCase("black");
-        new Board().drawChessBoard(blackView);
+
+        Map<String, Object> game = cachedGames.get(idx - 1);
+        Object gameIDObj = game.get("gameID");
+        int gameID = (gameIDObj instanceof Number) ? ((Number) gameIDObj).intValue() : -1;
+
+        if (gameID == -1) {
+            System.out.println("Error: Invalid game ID");
+            return;
+        }
+
+        if (!server.joinGame(gameID, color)) {
+            System.out.println("Error: The color might be taken or the game doesn't exist.");
+            return;
+        }
+
+        System.out.println("Joined game as " + color + ". Drawing board:");
+        new Board().drawChessBoard(color.equalsIgnoreCase("BLACK"));
     }
 
     private void doObserve(String line) {
@@ -189,24 +206,36 @@ public class ConsoleUI {
             System.out.println("Usage: observe <LIST_INDEX>");
             return;
         }
+
         int idx;
-        try { idx = Integer.parseInt(parts[1]); }
-        catch (NumberFormatException e) {
-            System.out.println("Invalid index for observe");
+        try {
+            idx = Integer.parseInt(parts[1]);
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Invalid index format");
             return;
         }
-        if (idx<1 || idx>cachedGames.size()) {
-            System.out.println("Index out of range. 'list' first?");
+
+        if (!isValidIndex(idx)) {
+            System.out.println("Error: Index out of range. Type 'list' to see valid games.");
             return;
         }
-        double d = (double) cachedGames.get(idx-1).get("gameID");
-        int gameID = (int)d;
-        boolean ok = server.joinGame(gameID,null);
-        if (!ok) {
-            System.out.println("observe failed or game not found");
+
+        Map<String, Object> game = cachedGames.get(idx - 1);
+        Object gameIDObj = game.get("gameID");
+        int gameID = (gameIDObj instanceof Number) ? ((Number) gameIDObj).intValue() : -1;
+
+        if (gameID == -1) {
+            System.out.println("Error: Invalid game ID");
             return;
         }
-        System.out.println("Observing from White's perspective:");
+
+
+        if (!server.observeGame(gameID)) {
+            System.out.println("Failed to observe game. It might not exist.");
+            return;
+        }
+
+        System.out.println("Observing game from the White perspective:");
         new Board().drawChessBoard(false);
     }
 }
