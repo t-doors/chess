@@ -87,11 +87,17 @@ public class ServerAccess {
         return !resp.containsKey("Error") && !resp.containsKey("message");
     }
 
+    public boolean observeGame(int gameID) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("gameID", gameID);
+        Map<String, Object> response = doCall("PUT", "/observe", params);
+        return !response.containsKey("error");
+    }
+
     public void clear() {
         doCall("DELETE", "/db", null);
     }
-
-
+    
     private Map<String,Object> doCall(String method, String endpoint, Object payload) {
         Map<String,Object> out = new HashMap<>();
         try {

@@ -76,8 +76,6 @@ public class GameService {
         if (authToken == null || authToken.isEmpty()) {
             throw new UnauthorizedException("No token provided");
         }
-
-
         AuthData authData;
         try {
             authData = authDAO.getAuth(authToken);
@@ -92,39 +90,60 @@ public class GameService {
             throw new BadRequestException("Game not found: " + gameID);
         }
 
+        String username = authData.username();
+        String currentWhite = game.whiteUsername();
+        String currentBlack = game.blackUsername();
+
         if (requestedColor == null) {
-            throw new BadRequestException("No color specified");
+            return true;
         }
+
+        if (username.equals(currentWhite) || username.equals(currentBlack)) {
+            throw new BadRequestException("You're already participating in this game");
+        }
+
         String color = requestedColor.toUpperCase();
         if (!"WHITE".equals(color) && !"BLACK".equals(color)) {
             throw new BadRequestException("Invalid color: " + requestedColor);
         }
 
-        String whiteUser = game.whiteUsername();
-        String blackUser = game.blackUsername();
-
-        if ("WHITE".equals(color)) {
-            if (whiteUser != null) {
-                return false;
-            }
-            whiteUser = authData.username();
-        } else {
-            if (blackUser != null) {
-                return false;
-            }
-            blackUser = authData.username();
+        if ("WHITE".equals(color) && currentWhite != null) {
+            throw new BadRequestException("White color already taken");
+        }
+        if ("BLACK".equals(color) && currentBlack != null) {
+            throw new BadRequestException("Black color already taken");
         }
 
         GameData updated = new GameData(
                 game.gameID(),
-                whiteUser,
-                blackUser,
+                "WHITE".equals(color) ? username : currentWhite,
+                "BLACK".equals(color) ? username : currentBlack,
                 game.gameName(),
                 game.game()
         );
         gameDAO.updateGame(updated);
-
         return true;
+    }
+
+    public void observeGame(String authToken, int gameID)
+            throws UnauthorizedException, DataAccessException, BadRequestException {
+
+        if (authToken == null || authToken.isEmpty()) {
+            throw new UnauthorizedException("No token provided");
+        }
+
+        try {
+            authDAO.getAuth(authToken);
+        } catch (DataAccessException ex) {
+            throw new UnauthorizedException("Invalid token");
+        }
+
+        try {
+            gameDAO.getGame(gameID);
+        } catch (DataAccessException ex) {
+            throw new BadRequestException("Game not found: " + gameID);
+        }
+
     }
 
 }
