@@ -51,6 +51,7 @@ public class Server {
         Spark.get("/game", gameHandler::handleListGames);
         Spark.post("/game", gameHandler::handleCreateGame);
         Spark.put("/game", gameHandler::handleJoinGame);
+        Spark.put("/observe", gameHandler::handleObserve);
 
 
         Spark.awaitInitialization();

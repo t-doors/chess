@@ -7,6 +7,7 @@ import service.GameService;
 import spark.*;
 
 import java.util.Collection;
+import java.util.Map;
 
 public class GameHandler {
 
@@ -64,6 +65,36 @@ public class GameHandler {
         } catch (Exception e) {
             res.status(500);
             return "{ \"message\": \"Error: %s\" }".formatted(e.getMessage());
+        }
+    }
+
+    public Object handleObserve(Request req, Response res) {
+        try {
+            String authToken = req.headers("Authorization");
+            String gameIDParam = req.queryParams("gameID");
+
+            if (gameIDParam == null) {
+                res.status(400);
+                return new Gson().toJson(Map.of("message", "Error: bad request"));
+            }
+
+            int gameID = Integer.parseInt(gameIDParam);
+
+            gameService.observeGame(authToken, gameID);
+            res.status(200);
+            return "";
+        } catch (NumberFormatException e) {
+            res.status(400);
+            return new Gson().toJson(Map.of("message", "Error: Invalid game ID format"));
+        } catch (UnauthorizedException e) {
+            res.status(401);
+            return new Gson().toJson(Map.of("message", "Error: " + e.getMessage()));
+        } catch (BadRequestException e) {
+            res.status(400);
+            return new Gson().toJson(Map.of("message", "Error: " + e.getMessage()));
+        } catch (Exception e) {
+            res.status(500);
+            return new Gson().toJson(Map.of("message", "Error: " + e.getMessage()));
         }
     }
 
