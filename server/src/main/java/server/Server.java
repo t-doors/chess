@@ -25,6 +25,8 @@ public class Server {
         authDAO = new AuthDAOSQL();
         gameDAO = new GameDAOSQL();
 
+        WebSocketHandler.initialize(authDAO, gameDAO, userDAO);
+
         clearService = new ClearService(userDAO, gameDAO, authDAO);
         clearHandler = new ClearHandler(clearService);
 
