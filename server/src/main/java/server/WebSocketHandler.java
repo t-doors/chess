@@ -52,6 +52,8 @@ public class WebSocketHandler {
         }
         switch (cmd.getCommandType()) {
             case CONNECT -> handleConnect(cmd, session);
+            case MAKE_MOVE -> handleMakeMove(cmd, session);
+
         }
     }
 
@@ -80,11 +82,92 @@ public class WebSocketHandler {
         }
     }
 
+    private void handleMakeMove(UserGameCommand cmd, Session session) {
+        String token = cmd.getAuthToken();
+        if (token == null) {
+            sendError(session, "Error: Missing auth token");
+            return;
+        }
+
+        try {
+            AuthData authData = authDAO.getAuth(token);
+            if (authData == null) {
+                sendError(session, "Error: Invalid token (no auth data)");
+                return;
+            }
+
+            String username = authData.username();
+
+            Integer gameID = cmd.getGameID();
+            if (gameID == null) {
+                sendError(session, "Error: Missing gameID");
+                return;
+            }
+            GameData gameData = gameDAO.getGame(gameID);
+            var chessGame = gameData.game();
+
+            if (!isUsersTurn(chessGame, gameData, username)) {
+                sendError(session, "Error: Not your turn or you're observer");
+                return;
+            }
+
+            if (cmd.getMove() == null) {
+                sendError(session, "Error: Missing move data");
+                return;
+            }
+            boolean moveOk = applyMove(chessGame, cmd.getMove());
+            if (!moveOk) {
+                sendError(session, "Error: Illegal move");
+                return;
+            }
+
+            GameData updated = new GameData(
+                    gameData.gameID(),
+                    gameData.whiteUsername(),
+                    gameData.blackUsername(),
+                    gameData.gameName(),
+                    chessGame
+            );
+
+            gameDAO.updateGame(updated);
+            broadcastLoadGame(updated);
+
+            String moveDesc = describeMove(cmd.getMove());
+            broadcastNotification(gameID, username + " moved " + moveDesc);
+            checkEndgameConditions(chessGame, username, gameID);
+
+        } catch (DataAccessException ex) {
+            sendError(session, "Error: " + ex.getMessage());
+        }
+    }
+
+    private boolean isUsersTurn(Object chessGame, GameData data, String username) {
+        return true;
+    }
+
+    private boolean applyMove(Object chessGame, Object move) {
+        return true;
+    }
+
+    private void checkEndgameConditions(Object chessGame, String username, Integer gameID) {
+    }
+
+    private String describeMove(Object move) {
+        return "(a move)";
+    }
+
     private void sendLoadGame(Session session, GameData gameData) {
         ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
         msg.setGame(gameData);
         String json = new Gson().toJson(msg);
         sendToSession(session, json);
+    }
+
+    private void broadcastLoadGame(GameData gameData) {
+        ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
+        msg.setGame(gameData);
+        String json = new Gson().toJson(msg);
+        ConnectionManager.broadcastToGame(gameData.gameID(), json);
     }
 
     private void broadcastNotification(Integer gameID, String message) {
