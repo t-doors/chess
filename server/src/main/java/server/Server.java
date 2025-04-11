@@ -42,6 +42,8 @@ public class Server {
     public int run(int desiredPort) {
         Spark.port(desiredPort);
 
+        Spark.webSocket("/ws", WebSocketHandler.class);
+
         Spark.staticFiles.location("web");
 
         Spark.delete("/db", clearHandler::handleClear);
@@ -52,7 +54,6 @@ public class Server {
         Spark.post("/game", gameHandler::handleCreateGame);
         Spark.put("/game", gameHandler::handleJoinGame);
         Spark.put("/observe", gameHandler::handleObserve);
-        Spark.webSocket("/ws", WebSocketHandler.class);
 
         Spark.awaitInitialization();
         return Spark.port();

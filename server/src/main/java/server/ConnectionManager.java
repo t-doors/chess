@@ -1,6 +1,6 @@
 package server;
 
-import javax.websocket.Session;
+import org.eclipse.jetty.websocket.api.Session;
 import java.io.IOException;
 import java.util.*;
 
@@ -31,10 +31,10 @@ public class ConnectionManager {
         for (Session s : sessions) {
             if (s.isOpen()) {
                 try {
-                    s.getBasicRemote().sendText(jsonMessage);
+                    s.getRemote().sendString(jsonMessage);
                 } catch (IOException e) {
-                    System.err.println("Failed to send WebSocket message "
-                            + s.getId() + ": " + e.getMessage());
+                    System.err.println("Failed to send WebSocket message to session "
+                            + s.getRemoteAddress() + ": " + e.getMessage());
                 }
             }
         }

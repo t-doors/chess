@@ -5,13 +5,19 @@ import dataaccess.*;
 import model.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
+import chess.*;
 
-import javax.websocket.*;
-import javax.websocket.server.ServerEndpoint;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+
 import java.util.HashMap;
 import java.util.Map;
 
-@ServerEndpoint("/ws")
+@WebSocket
 public class WebSocketHandler {
 
     private static AuthDAO authDAO;
@@ -26,14 +32,14 @@ public class WebSocketHandler {
         userDAO = uDao;
     }
 
-    @OnOpen
+    @OnWebSocketConnect
     public void onOpen(Session session) {
-        System.out.println("WebSocket open: " + session.getId());
+        System.out.println("WebSocket open: " + session.getRemoteAddress());
     }
 
-    @OnClose
-    public void onClose(Session session) {
-        System.out.println("WebSocket close: " + session.getId());
+    @OnWebSocketClose
+    public void onClose(Session session, int statusCode, String reason) {
+        System.out.println("WebSocket close: " + session.getRemoteAddress());
         Integer gameID = sessionGameMap.get(session);
         if (gameID != null) {
             ConnectionManager.removeConnection(gameID, session);
@@ -41,8 +47,8 @@ public class WebSocketHandler {
         }
     }
 
-    @OnMessage
-    public void onMessage(String message, Session session) {
+    @OnWebSocketMessage
+    public void onMessage(Session session, String message) {
         System.out.println("Received raw message: " + message);
         Gson gson = new Gson();
         UserGameCommand cmd = gson.fromJson(message, UserGameCommand.class);
@@ -50,13 +56,22 @@ public class WebSocketHandler {
             sendError(session, "Error: Invalid JSON in UserGameCommand");
             return;
         }
+
         switch (cmd.getCommandType()) {
             case CONNECT -> handleConnect(cmd, session);
             case MAKE_MOVE -> handleMakeMove(cmd, session);
-
+            case RESIGN -> handleResign(cmd, session);
         }
     }
 
+    @OnWebSocketError
+    public void onError(Session session, Throwable throwable) {
+        System.out.println("WebSocket error in session "
+                + (session != null ? session.getRemoteAddress() : "null"));
+        throwable.printStackTrace();
+    }
+
+    // ===== CONNECT =====
     private void handleConnect(UserGameCommand cmd, Session session) {
         String token = cmd.getAuthToken();
         Integer gameID = cmd.getGameID();
@@ -82,6 +97,7 @@ public class WebSocketHandler {
         }
     }
 
+    // ===== MAKE_MOVE =====
     private void handleMakeMove(UserGameCommand cmd, Session session) {
         String token = cmd.getAuthToken();
         if (token == null) {
@@ -141,6 +157,49 @@ public class WebSocketHandler {
         }
     }
 
+    // ===== RESIGN =====
+    private void handleResign(UserGameCommand cmd, Session session) {
+        String token = cmd.getAuthToken();
+        Integer gameID = cmd.getGameID();
+
+        if (token == null || gameID == null) {
+            sendError(session, "Error: Missing token or gameID for RESIGN");
+            return;
+        }
+
+        try {
+            AuthData authData = authDAO.getAuth(token); // throws if not found
+            if (authData == null) {
+                sendError(session, "Error: Invalid auth token for RESIGN");
+                return;
+            }
+            String username = authData.username();
+            GameData gameData = gameDAO.getGame(gameID);
+
+            boolean isWhite = username.equals(gameData.whiteUsername());
+            boolean isBlack = username.equals(gameData.blackUsername());
+            if (!isWhite && !isBlack) {
+                sendError(session, "Error: Observers cannot resign");
+                return;
+            }
+
+            ChessGame chessGame = gameData.game();
+
+            GameData updated = new GameData(
+                    gameData.gameID(),
+                    null,null,
+                    gameData.gameName(),
+                    chessGame
+            );
+            gameDAO.updateGame(updated);
+
+            broadcastNotification(gameID, username + " resigned the game. Game over.");
+
+        } catch (DataAccessException e) {
+            sendError(session, "Error: " + e.getMessage());
+        }
+    }
+
     private boolean isUsersTurn(Object chessGame, GameData data, String username) {
         return true;
     }
@@ -184,7 +243,7 @@ public class WebSocketHandler {
     }
 
     private void sendError(Session session, String msg) {
-        System.out.println("Sending error to " + session.getId() + ": " + msg);
+        System.out.println("Sending error to " + session.getRemoteAddress() + ": " + msg);
         ServerMessage sm = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
         sm.setErrorMessage(msg);
         String json = new Gson().toJson(sm);
@@ -193,15 +252,9 @@ public class WebSocketHandler {
 
     private void sendToSession(Session session, String json) {
         try {
-            session.getBasicRemote().sendText(json);
+            session.getRemote().sendString(json);
         } catch (Exception e) {
-            System.err.println("Failed to send to session " + session.getId() + ": " + e.getMessage());
+            System.err.println("Failed to send to session " + session.getRemoteAddress() + ": " + e.getMessage());
         }
-    }
-
-    @OnError
-    public void onError(Session session, Throwable throwable) {
-        System.out.println("WebSocket error in session " + (session != null ? session.getId() : "null"));
-        throwable.printStackTrace();
     }
 }
