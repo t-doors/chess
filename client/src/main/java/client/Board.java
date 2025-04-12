@@ -31,6 +31,20 @@ public class Board {
         System.out.println(RESET_BG_COLOR);
     }
 
+    private void printColumns(boolean whiteView) {
+        System.out.print("   ");
+        if (whiteView) {
+            for (char c = 'a'; c <= 'h'; c++) {
+                System.out.printf(" %c ", c);
+            }
+        } else {
+            for (char c = 'h'; c >= 'a'; c--) {
+                System.out.printf(" %c ", c);
+            }
+        }
+        System.out.println();
+    }
+
     private void printSquare(int row, int col, boolean whiteView) {
         boolean dark;
         if (whiteView) {
@@ -50,21 +64,6 @@ public class Board {
         String cell = piece.isEmpty() ? "   " : " " + piece + " ";
         System.out.print(textColor + cell + RESET_TEXT_COLOR);
     }
-
-    private void printColumns(boolean whiteView) {
-        System.out.print("   ");
-        if (whiteView) {
-            for (char c = 'a'; c <= 'h'; c++) {
-                System.out.printf(" %c ", c);
-            }
-        } else {
-            for (char c = 'h'; c >= 'a'; c--) {
-                System.out.printf(" %c ", c);
-            }
-        }
-        System.out.println();
-    }
-
 
     private String getPieceWhitePerspective(int r, int c) {
         if (r == 1) {
