@@ -49,10 +49,6 @@ public class Board {
         System.out.println();
     }
 
-    private void printRowWhiteView(int row) {
-        printRow(row, row, 1, 8, 1, true);
-    }
-
     private void printSquareWhiteView(int row, int col) {
         boolean dark = ((row + col) % 2 == 0);
         System.out.print(dark ? SET_BG_COLOR_MAGENTA : SET_BG_COLOR_LIGHT_GREY);
@@ -60,6 +56,16 @@ public class Board {
         String piece = getPieceWhitePerspective(row, col);
         String textColor = getTextColor(piece);
 
+        String cell = piece.isEmpty() ? "   " : " " + piece + " ";
+        System.out.print(textColor + cell + RESET_TEXT_COLOR);
+    }
+
+    private void printSquareBlackView(int row, int col) {
+        boolean dark = ((row + col) % 2 == 1);
+        System.out.print(dark ? SET_BG_COLOR_MAGENTA : SET_BG_COLOR_LIGHT_GREY);
+
+        String piece = getPieceBlackPerspective(row, col);
+        String textColor = getTextColor(piece);
         String cell = piece.isEmpty() ? "   " : " " + piece + " ";
         System.out.print(textColor + cell + RESET_TEXT_COLOR);
     }
@@ -94,24 +100,6 @@ public class Board {
         return "";
     }
 
-    private void printColumnsWhite() {
-        printColumns(true);
-    }
-
-    private void printRowBlackView(int row) {
-        printRow(row, 9 - row, 8, 1, -1, false);
-    }
-
-    private void printSquareBlackView(int row, int col) {
-        boolean dark = ((row + col) % 2 == 1);
-        System.out.print(dark ? SET_BG_COLOR_MAGENTA : SET_BG_COLOR_LIGHT_GREY);
-
-        String piece = getPieceBlackPerspective(row, col);
-        String textColor = getTextColor(piece);
-        String cell = piece.isEmpty() ? "   " : " " + piece + " ";
-        System.out.print(textColor + cell + RESET_TEXT_COLOR);
-    }
-
     private String getPieceBlackPerspective(int r, int c) {
         if (r == 1) {
             return switch (c) {
@@ -142,18 +130,10 @@ public class Board {
         return "";
     }
 
-    private void printColumnsBlack() {
-        printColumns(false);
-    }
-
     private String getTextColor(String piece) {
         if (piece.isEmpty()) {
             return RESET_TEXT_COLOR;
         }
-        if (Character.isUpperCase(piece.charAt(0))) {
-            return SET_TEXT_COLOR_WHITE;
-        } else {
-            return SET_TEXT_COLOR_BLACK;
-        }
+        return (Character.isUpperCase(piece.charAt(0))) ? SET_TEXT_COLOR_WHITE : SET_TEXT_COLOR_BLACK;
     }
 }
