@@ -3,31 +3,54 @@ package client;
 import static ui.EscapeSequences.*;
 
 public class Board {
+
     public void drawChessBoard(boolean blackView) {
         System.out.print(ERASE_SCREEN);
 
         if (!blackView) {
             for (int row = 8; row >= 1; row--) {
-                printRowWhiteView(row);
+                printRow(row, row, 1, 8, 1, true);
             }
-            printColumnsWhite();
+            printColumns(true);
         } else {
             for (int row = 8; row >= 1; row--) {
-                printRowBlackView(row);
+                printRow(row, 9 - row, 8, 1, -1, false);
             }
-            printColumnsBlack();
+            printColumns(false);
         }
 
         System.out.print(RESET_BG_COLOR + RESET_TEXT_COLOR);
     }
 
-    private void printRowWhiteView(int row) {
-        System.out.printf("%2d ", row);
 
-        for (int col = 1; col <= 8; col++) {
-            printSquareWhiteView(row, col);
+    private void printRow(int row, int label, int start, int end, int step, boolean whiteView) {
+        System.out.printf("%2d ", label);
+        for (int col = start; col != end + step; col += step) {
+            if (whiteView) {
+                printSquareWhiteView(row, col);
+            } else {
+                printSquareBlackView(row, col);
+            }
         }
         System.out.println(RESET_BG_COLOR);
+    }
+
+    private void printColumns(boolean whiteView) {
+        System.out.print("   ");
+        if (whiteView) {
+            for (char c = 'a'; c <= 'h'; c++) {
+                System.out.printf(" %c ", c);
+            }
+        } else {
+            for (char c = 'h'; c >= 'a'; c--) {
+                System.out.printf(" %c ", c);
+            }
+        }
+        System.out.println();
+    }
+
+    private void printRowWhiteView(int row) {
+        printRow(row, row, 1, 8, 1, true);
     }
 
     private void printSquareWhiteView(int row, int col) {
@@ -72,23 +95,12 @@ public class Board {
     }
 
     private void printColumnsWhite() {
-        System.out.print("   ");
-        for (char c = 'a'; c <= 'h'; c++) {
-            System.out.printf(" %c ", c);
-        }
-        System.out.println();
+        printColumns(true);
     }
 
     private void printRowBlackView(int row) {
-        int label = 9 - row;
-        System.out.printf("%2d ", label);
-
-        for (int col = 8; col >= 1; col--) {
-            printSquareBlackView(row, col);
-        }
-        System.out.println(RESET_BG_COLOR);
+        printRow(row, 9 - row, 8, 1, -1, false);
     }
-
 
     private void printSquareBlackView(int row, int col) {
         boolean dark = ((row + col) % 2 == 1);
@@ -97,10 +109,8 @@ public class Board {
         String piece = getPieceBlackPerspective(row, col);
         String textColor = getTextColor(piece);
         String cell = piece.isEmpty() ? "   " : " " + piece + " ";
-
         System.out.print(textColor + cell + RESET_TEXT_COLOR);
     }
-
 
     private String getPieceBlackPerspective(int r, int c) {
         if (r == 1) {
@@ -133,11 +143,7 @@ public class Board {
     }
 
     private void printColumnsBlack() {
-        System.out.print("   ");
-        for (char c = 'h'; c >= 'a'; c--) {
-            System.out.printf(" %c ", c);
-        }
-        System.out.println();
+        printColumns(false);
     }
 
     private String getTextColor(String piece) {

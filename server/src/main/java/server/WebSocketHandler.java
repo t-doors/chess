@@ -26,7 +26,7 @@ public class WebSocketHandler {
     private static GameDAO gameDAO;
     private static UserDAO userDAO;
 
-    private static final Map<Session, Integer> sessionGameMap = new HashMap<>();
+    private static final Map<Session, Integer> SESSION_GAME_MAP = new HashMap<>();
 
     public static void initialize(AuthDAO aDao, GameDAO gDao, UserDAO uDao) {
         authDAO = aDao;
@@ -42,10 +42,10 @@ public class WebSocketHandler {
     @OnWebSocketClose
     public void onClose(Session session, int statusCode, String reason) {
         System.out.println("WebSocket close: " + session.getRemoteAddress());
-        Integer gameID = sessionGameMap.get(session);
+        Integer gameID = SESSION_GAME_MAP.get(session);
         if (gameID != null) {
             ConnectionManager.removeConnection(gameID, session);
-            sessionGameMap.remove(session);
+            SESSION_GAME_MAP.remove(session);
         }
     }
 
@@ -86,7 +86,7 @@ public class WebSocketHandler {
             }
             GameData gameData = gameDAO.getGame(gameID);
 
-            sessionGameMap.put(session, gameID);
+            SESSION_GAME_MAP.put(session, gameID);
             ConnectionManager.addConnection(gameID, session);
 
             sendLoadGame(session, gameData);
@@ -215,7 +215,7 @@ public class WebSocketHandler {
             gameDAO.updateGame(gameData);
 
             ConnectionManager.removeConnection(gameID, session);
-            sessionGameMap.remove(session);
+            SESSION_GAME_MAP.remove(session);
             broadcastNotification(gameID, session, username + " left the game.");
         } catch (DataAccessException e) {
             sendError(session, "Error: " + e.getMessage());
@@ -261,7 +261,7 @@ public class WebSocketHandler {
             broadcastNotificationToAll(gameID, username + " resigned the game. Game over.");
 
             ConnectionManager.removeConnection(gameID, session);
-            sessionGameMap.remove(session);
+            SESSION_GAME_MAP.remove(session);
 
         } catch (DataAccessException e) {
             sendError(session, "Error: " + e.getMessage());
@@ -329,10 +329,13 @@ public class WebSocketHandler {
 
 
     private String determineRole(GameData gameData, String username) {
-        if (username.equals(gameData.whiteUsername()))
+        if (username.equals(gameData.whiteUsername())){
             return "WHITE";
-        if (username.equals(gameData.blackUsername()))
+        }
+
+        if (username.equals(gameData.blackUsername())){
             return "BLACK";
+        }
         return "Observer";
     }
 

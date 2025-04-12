@@ -5,28 +5,28 @@ import java.io.IOException;
 import java.util.*;
 
 public class ConnectionManager {
-    private static final Map<Integer, Set<Session>> gameConnections = new HashMap<>();
+    private static final Map<Integer, Set<Session>> GAME_CONNECTIONS = new HashMap<>();
 
     public static synchronized void addConnection(int gameID, Session session) {
-        gameConnections.putIfAbsent(gameID, new HashSet<>());
-        gameConnections.get(gameID).add(session);
+        GAME_CONNECTIONS.putIfAbsent(gameID, new HashSet<>());
+        GAME_CONNECTIONS.get(gameID).add(session);
     }
 
     public static synchronized void removeConnection(int gameID, Session session) {
-        Set<Session> sessions = gameConnections.get(gameID);
+        Set<Session> sessions = GAME_CONNECTIONS.get(gameID);
         if (sessions != null) {
             sessions.remove(session);
             if (sessions.isEmpty()) {
-                gameConnections.remove(gameID);
+                GAME_CONNECTIONS.remove(gameID);
             }
         }
     }
     public static synchronized Set<Session> getConnectionsForGame(int gameID) {
-        return gameConnections.getOrDefault(gameID, Collections.emptySet());
+        return GAME_CONNECTIONS.getOrDefault(gameID, Collections.emptySet());
     }
 
     public static synchronized void broadcastToGame(int gameID, String jsonMessage) {
-        Set<Session> sessions = gameConnections.get(gameID);
+        Set<Session> sessions = GAME_CONNECTIONS.get(gameID);
         if (sessions == null) {
             return;
         }
