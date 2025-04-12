@@ -21,12 +21,16 @@ public class ConnectionManager {
             }
         }
     }
+    public static synchronized Set<Session> getConnectionsForGame(int gameID) {
+        return gameConnections.getOrDefault(gameID, Collections.emptySet());
+    }
 
     public static synchronized void broadcastToGame(int gameID, String jsonMessage) {
         Set<Session> sessions = gameConnections.get(gameID);
         if (sessions == null) {
             return;
         }
+
 
         for (Session s : sessions) {
             if (s.isOpen()) {

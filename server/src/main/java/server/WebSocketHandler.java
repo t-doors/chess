@@ -16,6 +16,7 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @WebSocket
 public class WebSocketHandler {
@@ -71,7 +72,6 @@ public class WebSocketHandler {
         throwable.printStackTrace();
     }
 
-    // ===== CONNECT =====
     private void handleConnect(UserGameCommand cmd, Session session) {
         String token = cmd.getAuthToken();
         Integer gameID = cmd.getGameID();
@@ -90,14 +90,14 @@ public class WebSocketHandler {
             sendLoadGame(session, gameData);
 
             String role = determineRole(gameData, authData.username());
-            broadcastNotification(gameID, authData.username() + " connected as " + role);
+            broadcastNotification(gameID, session, authData.username() + " connected as " + role);
 
         } catch (DataAccessException e) {
             sendError(session, "Error: " + e.getMessage());
         }
     }
 
-    // ===== MAKE_MOVE =====
+
     private void handleMakeMove(UserGameCommand cmd, Session session) {
         String token = cmd.getAuthToken();
         if (token == null) {
@@ -149,7 +149,7 @@ public class WebSocketHandler {
             broadcastLoadGame(updated);
 
             String moveDesc = describeMove(cmd.getMove());
-            broadcastNotification(gameID, username + " moved " + moveDesc);
+            broadcastNotification(gameID, session, username + " moved " + moveDesc);
             checkEndgameConditions(chessGame, username, gameID);
 
         } catch (DataAccessException ex) {
@@ -157,7 +157,6 @@ public class WebSocketHandler {
         }
     }
 
-    // ===== RESIGN =====
     private void handleResign(UserGameCommand cmd, Session session) {
         String token = cmd.getAuthToken();
         Integer gameID = cmd.getGameID();
@@ -193,7 +192,7 @@ public class WebSocketHandler {
             );
             gameDAO.updateGame(updated);
 
-            broadcastNotification(gameID, username + " resigned the game. Game over.");
+            broadcastNotification(gameID, session, username + " resigned the game. Game over.");
 
         } catch (DataAccessException e) {
             sendError(session, "Error: " + e.getMessage());
@@ -229,12 +228,26 @@ public class WebSocketHandler {
         ConnectionManager.broadcastToGame(gameData.gameID(), json);
     }
 
-    private void broadcastNotification(Integer gameID, String message) {
+    private void broadcastNotification(Integer gameID, Session exclude, String message) {
         ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         msg.setMessage(message);
         String json = new Gson().toJson(msg);
-        ConnectionManager.broadcastToGame(gameID, json);
+
+        Set<Session> sessions = ConnectionManager.getConnectionsForGame(gameID);
+        for (Session s : sessions) {
+            if (!s.equals(exclude) && s.isOpen()) {
+                try {
+                    s.getRemote().sendString(json);
+                } catch (Exception e) {
+                    System.err.println("Failed to send notification to "
+                            + s.getRemoteAddress() + ": " + e.getMessage());
+                }
+            }
+        }
     }
+
+
+
 
     private String determineRole(GameData gameData, String username) {
         if (username.equals(gameData.whiteUsername())) return "WHITE";
