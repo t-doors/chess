@@ -206,6 +206,14 @@ public class WebSocketHandler {
             }
             String username = authData.username();
             GameData gameData = gameDAO.getGame(gameID);
+
+            if (username.equals(gameData.whiteUsername())) {
+                gameData = new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(), gameData.game());
+            } else if (username.equals(gameData.blackUsername())) {
+                gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(), gameData.game());
+            }
+            gameDAO.updateGame(gameData);
+
             ConnectionManager.removeConnection(gameID, session);
             sessionGameMap.remove(session);
             broadcastNotification(gameID, session, username + " left the game.");
@@ -213,6 +221,7 @@ public class WebSocketHandler {
             sendError(session, "Error: " + e.getMessage());
         }
     }
+
 
     private void handleResign(UserGameCommand cmd, Session session) {
         String token = cmd.getAuthToken();
@@ -248,9 +257,11 @@ public class WebSocketHandler {
                     chessGame
             );
             gameDAO.updateGame(updated);
+
+            broadcastNotificationToAll(gameID, username + " resigned the game. Game over.");
+
             ConnectionManager.removeConnection(gameID, session);
             sessionGameMap.remove(session);
-            broadcastNotification(gameID, session, username + " resigned the game. Game over.");
 
         } catch (DataAccessException e) {
             sendError(session, "Error: " + e.getMessage());
@@ -286,6 +297,15 @@ public class WebSocketHandler {
         String json = new Gson().toJson(msg);
         ConnectionManager.broadcastToGame(gameData.gameID(), json);
     }
+
+    private void broadcastNotificationToAll(Integer gameID, String message) {
+        ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        msg.setMessage(message);
+        String json = new Gson().toJson(msg);
+        ConnectionManager.broadcastToGame(gameID, json);
+    }
+
+
 
     private void broadcastNotification(Integer gameID, Session exclude, String message) {
         ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
