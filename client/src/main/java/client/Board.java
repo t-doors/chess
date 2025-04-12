@@ -7,21 +7,19 @@ public class Board {
     public void drawChessBoard(boolean blackView) {
         System.out.print(ERASE_SCREEN);
 
-        if (!blackView) {
-            for (int row = 8; row >= 1; row--) {
-                printRow(row, row, 1, 8, 1, true);
-            }
-            printColumns(true);
-        } else {
-            for (int row = 8; row >= 1; row--) {
-                printRow(row, 9 - row, 8, 1, -1, false);
-            }
-            printColumns(false);
-        }
+        for (int row = 8; row >= 1; row--) {
 
+            int label = blackView ? 9 - row : row;
+            int startCol = blackView ? 8 : 1;
+            int endCol = blackView ? 1 : 8;
+            int step = blackView ? -1 : 1;
+            boolean whiteView = !blackView;
+
+            printRow(row, label, startCol, endCol, step, whiteView);
+        }
+        printColumns(!blackView);
         System.out.print(RESET_BG_COLOR + RESET_TEXT_COLOR);
     }
-
 
     private void printRow(int boardRow, int label, int startCol, int endCol, int step, boolean whiteView) {
         System.out.printf("%2d ", label);
@@ -29,6 +27,18 @@ public class Board {
             printSquare(boardRow, col, whiteView);
         }
         System.out.println(RESET_BG_COLOR);
+    }
+
+
+    private void printSquare(int row, int col, boolean whiteView) {
+        boolean dark = whiteView ? ((row + col) % 2 == 0) : ((row + col) % 2 == 1);
+        System.out.print(dark ? SET_BG_COLOR_MAGENTA : SET_BG_COLOR_LIGHT_GREY);
+
+        String piece = whiteView ? getPieceWhitePerspective(row, col) : getPieceBlackPerspective(row, col);
+        String textColor = getTextColor(piece);
+
+        String cell = piece.isEmpty() ? "   " : " " + piece + " ";
+        System.out.print(textColor + cell + RESET_TEXT_COLOR);
     }
 
     private void printColumns(boolean whiteView) {
@@ -43,26 +53,6 @@ public class Board {
             }
         }
         System.out.println();
-    }
-
-    private void printSquare(int row, int col, boolean whiteView) {
-        boolean dark;
-        if (whiteView) {
-            dark = ((row + col) % 2 == 0);
-        } else {
-            dark = ((row + col) % 2 == 1);
-        }
-        System.out.print(dark ? SET_BG_COLOR_MAGENTA : SET_BG_COLOR_LIGHT_GREY);
-
-        String piece;
-        if (whiteView) {
-            piece = getPieceWhitePerspective(row, col);
-        } else {
-            piece = getPieceBlackPerspective(row, col);
-        }
-        String textColor = getTextColor(piece);
-        String cell = piece.isEmpty() ? "   " : " " + piece + " ";
-        System.out.print(textColor + cell + RESET_TEXT_COLOR);
     }
 
     private String getPieceWhitePerspective(int r, int c) {
@@ -129,7 +119,7 @@ public class Board {
         if (piece.isEmpty()) {
             return RESET_TEXT_COLOR;
         }
-        return (Character.isUpperCase(piece.charAt(0)))
+        return Character.isUpperCase(piece.charAt(0))
                 ? SET_TEXT_COLOR_WHITE
                 : SET_TEXT_COLOR_BLACK;
     }
