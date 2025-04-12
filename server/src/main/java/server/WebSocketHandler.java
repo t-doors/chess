@@ -14,6 +14,7 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -61,6 +62,7 @@ public class WebSocketHandler {
         switch (cmd.getCommandType()) {
             case CONNECT -> handleConnect(cmd, session);
             case MAKE_MOVE -> handleMakeMove(cmd, session);
+            case LEAVE -> handleLeave(cmd, session);
             case RESIGN -> handleResign(cmd, session);
         }
     }
@@ -120,10 +122,38 @@ public class WebSocketHandler {
                 return;
             }
             GameData gameData = gameDAO.getGame(gameID);
-            var chessGame = gameData.game();
 
-            if (!isUsersTurn(chessGame, gameData, username)) {
-                sendError(session, "Error: Not your turn or you're observer");
+            ChessGame chessGame = gameData.game();
+            if (chessGame == null) {
+                chessGame = new ChessGame();
+                gameData = new GameData(
+                        gameData.gameID(),
+                        gameData.whiteUsername(),
+                        gameData.blackUsername(),
+                        gameData.gameName(),
+                        chessGame
+                );
+                gameDAO.updateGame(gameData);
+            }
+
+            if (isGameOver(gameData)) {
+                sendError(session, "Error: The game is over.");
+                return;
+            }
+
+            boolean isWhite = username.equals(gameData.whiteUsername());
+            boolean isBlack = username.equals(gameData.blackUsername());
+            if (!isWhite && !isBlack) {
+                sendError(session, "Error: Observers cannot make moves.");
+                return;
+            }
+
+            if (chessGame.getTeamTurn() == ChessGame.TeamColor.WHITE && !isWhite) {
+                sendError(session, "Error: Wrong turn (white's turn).");
+                return;
+            }
+            if (chessGame.getTeamTurn() == ChessGame.TeamColor.BLACK && !isBlack) {
+                sendError(session, "Error: Wrong turn (black's turn).");
                 return;
             }
 
@@ -131,29 +161,56 @@ public class WebSocketHandler {
                 sendError(session, "Error: Missing move data");
                 return;
             }
-            boolean moveOk = applyMove(chessGame, cmd.getMove());
-            if (!moveOk) {
-                sendError(session, "Error: Illegal move");
+
+            try {
+                chessGame.makeMove(cmd.getMove());
+            } catch (InvalidMoveException e) {
+                sendError(session, "Error: " + e.getMessage());
                 return;
             }
 
-            GameData updated = new GameData(
-                    gameData.gameID(),
-                    gameData.whiteUsername(),
-                    gameData.blackUsername(),
-                    gameData.gameName(),
-                    chessGame
-            );
+            if (chessGame.isInCheckmate(ChessGame.TeamColor.WHITE) ||
+                    chessGame.isInCheckmate(ChessGame.TeamColor.BLACK) ||
+                    chessGame.isInStalemate(ChessGame.TeamColor.WHITE) ||
+                    chessGame.isInStalemate(ChessGame.TeamColor.BLACK)) {
+                gameData = new GameData(gameData.gameID(), null, null, gameData.gameName(), chessGame);
+                gameDAO.updateGame(gameData);
+            } else {
+                gameDAO.updateGame(gameData);
+            }
 
-            gameDAO.updateGame(updated);
-            broadcastLoadGame(updated);
+            broadcastLoadGame(gameData);
 
             String moveDesc = describeMove(cmd.getMove());
             broadcastNotification(gameID, session, username + " moved " + moveDesc);
+
             checkEndgameConditions(chessGame, username, gameID);
 
         } catch (DataAccessException ex) {
             sendError(session, "Error: " + ex.getMessage());
+        }
+    }
+
+    private void handleLeave(UserGameCommand cmd, Session session) {
+        String token = cmd.getAuthToken();
+        Integer gameID = cmd.getGameID();
+        if (token == null || gameID == null) {
+            sendError(session, "Error: Missing token or gameID for LEAVE");
+            return;
+        }
+        try {
+            AuthData authData = authDAO.getAuth(token);
+            if (authData == null) {
+                sendError(session, "Error: Invalid auth token for LEAVE");
+                return;
+            }
+            String username = authData.username();
+            GameData gameData = gameDAO.getGame(gameID);
+            ConnectionManager.removeConnection(gameID, session);
+            sessionGameMap.remove(session);
+            broadcastNotification(gameID, session, username + " left the game.");
+        } catch (DataAccessException e) {
+            sendError(session, "Error: " + e.getMessage());
         }
     }
 
@@ -167,7 +224,7 @@ public class WebSocketHandler {
         }
 
         try {
-            AuthData authData = authDAO.getAuth(token); // throws if not found
+            AuthData authData = authDAO.getAuth(token);
             if (authData == null) {
                 sendError(session, "Error: Invalid auth token for RESIGN");
                 return;
@@ -191,7 +248,8 @@ public class WebSocketHandler {
                     chessGame
             );
             gameDAO.updateGame(updated);
-
+            ConnectionManager.removeConnection(gameID, session);
+            sessionGameMap.remove(session);
             broadcastNotification(gameID, session, username + " resigned the game. Game over.");
 
         } catch (DataAccessException e) {
@@ -199,15 +257,16 @@ public class WebSocketHandler {
         }
     }
 
-    private boolean isUsersTurn(Object chessGame, GameData data, String username) {
-        return true;
+    private boolean isGameOver(GameData gameData) {
+        return gameData.whiteUsername() == null && gameData.blackUsername() == null;
     }
 
-    private boolean applyMove(Object chessGame, Object move) {
-        return true;
-    }
-
-    private void checkEndgameConditions(Object chessGame, String username, Integer gameID) {
+    private void checkEndgameConditions(ChessGame chessGame, String username, Integer gameID) {
+        if (chessGame.isInCheckmate(ChessGame.TeamColor.WHITE) || chessGame.isInCheckmate(ChessGame.TeamColor.BLACK)) {
+            broadcastNotification(gameID, null, "Checkmate! Game over.");
+        } else if (chessGame.isInStalemate(ChessGame.TeamColor.WHITE) || chessGame.isInStalemate(ChessGame.TeamColor.BLACK)) {
+            broadcastNotification(gameID, null, "Stalemate! Game over.");
+        }
     }
 
     private String describeMove(Object move) {
@@ -235,10 +294,10 @@ public class WebSocketHandler {
 
         Set<Session> sessions = ConnectionManager.getConnectionsForGame(gameID);
         for (Session s : sessions) {
-            if (!s.equals(exclude) && s.isOpen()) {
+            if ((exclude == null || !s.equals(exclude)) && s.isOpen()) {
                 try {
                     s.getRemote().sendString(json);
-                } catch (Exception e) {
+                } catch (IOException e) {
                     System.err.println("Failed to send notification to "
                             + s.getRemoteAddress() + ": " + e.getMessage());
                 }
@@ -250,8 +309,10 @@ public class WebSocketHandler {
 
 
     private String determineRole(GameData gameData, String username) {
-        if (username.equals(gameData.whiteUsername())) return "WHITE";
-        if (username.equals(gameData.blackUsername())) return "BLACK";
+        if (username.equals(gameData.whiteUsername()))
+            return "WHITE";
+        if (username.equals(gameData.blackUsername()))
+            return "BLACK";
         return "Observer";
     }
 
