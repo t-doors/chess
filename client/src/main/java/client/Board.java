@@ -7,17 +7,25 @@ public class Board {
     public void drawChessBoard(boolean blackView) {
         System.out.print(ERASE_SCREEN);
 
-        for (int row = 8; row >= 1; row--) {
+        int startCol, endCol, colStep;
+        boolean whiteView = !blackView;
 
-            int label = blackView ? 9 - row : row;
-            int startCol = blackView ? 8 : 1;
-            int endCol = blackView ? 1 : 8;
-            int step = blackView ? -1 : 1;
-            boolean whiteView = !blackView;
-
-            printRow(row, label, startCol, endCol, step, whiteView);
+        if (!blackView) {
+            startCol = 1;
+            endCol = 8;
+            colStep = 1;
+        } else {
+            startCol = 8;
+            endCol = 1;
+            colStep = -1;
         }
-        printColumns(!blackView);
+
+        for (int row = 8; row >= 1; row--) {
+            int label = whiteView ? row : (9 - row);
+            printRow(row, label, startCol, endCol, colStep, whiteView);
+        }
+        printColumns(whiteView);
+
         System.out.print(RESET_BG_COLOR + RESET_TEXT_COLOR);
     }
 
@@ -27,18 +35,6 @@ public class Board {
             printSquare(boardRow, col, whiteView);
         }
         System.out.println(RESET_BG_COLOR);
-    }
-
-
-    private void printSquare(int row, int col, boolean whiteView) {
-        boolean dark = whiteView ? ((row + col) % 2 == 0) : ((row + col) % 2 == 1);
-        System.out.print(dark ? SET_BG_COLOR_MAGENTA : SET_BG_COLOR_LIGHT_GREY);
-
-        String piece = whiteView ? getPieceWhitePerspective(row, col) : getPieceBlackPerspective(row, col);
-        String textColor = getTextColor(piece);
-
-        String cell = piece.isEmpty() ? "   " : " " + piece + " ";
-        System.out.print(textColor + cell + RESET_TEXT_COLOR);
     }
 
     private void printColumns(boolean whiteView) {
@@ -55,60 +51,46 @@ public class Board {
         System.out.println();
     }
 
-    private String getPieceWhitePerspective(int r, int c) {
-        if (r == 1) {
-            return switch (c) {
-                case 1, 8 -> "R";
-                case 2, 7 -> "N";
-                case 3, 6 -> "B";
-                case 4 -> "Q";
-                case 5 -> "K";
-                default -> "";
-            };
+    private void printSquare(int row, int col, boolean whiteView) {
+        boolean dark;
+        if (whiteView) {
+            dark = ((row + col) % 2 == 0);
+        } else {
+            dark = ((row + col) % 2 == 1);
         }
-        if (r == 2) {
-            return "P";
-        }
-        if (r == 7) {
-            return "p";
-        }
-        if (r == 8) {
-            return switch (c) {
-                case 1, 8 -> "r";
-                case 2, 7 -> "n";
-                case 3, 6 -> "b";
-                case 4 -> "q";
-                case 5 -> "k";
-                default -> "";
-            };
-        }
-        return "";
+        System.out.print(dark ? SET_BG_COLOR_MAGENTA : SET_BG_COLOR_LIGHT_GREY);
+
+        String piece = getPiece(row, col, whiteView);
+        String textColor = getTextColor(piece);
+        String cell = piece.isEmpty() ? "   " : " " + piece + " ";
+        System.out.print(textColor + cell + RESET_TEXT_COLOR);
     }
 
-    private String getPieceBlackPerspective(int r, int c) {
-        if (r == 1) {
-            return switch (c) {
-                case 1, 8 -> "r";
-                case 2, 7 -> "n";
-                case 3, 6 -> "b";
-                case 4 -> "q";
-                case 5 -> "k";
-                default -> "";
-            };
-        }
-        if (r == 2) {
-            return "p";
-        }
-        if (r == 7) {
-            return "P";
-        }
-        if (r == 8) {
+    private String getPiece(int r, int c, boolean isWhitePerspective) {
+        int actualRow = isWhitePerspective ? r : 9 - r;
+        if (actualRow == 1) {
             return switch (c) {
                 case 1, 8 -> "R";
                 case 2, 7 -> "N";
                 case 3, 6 -> "B";
                 case 4 -> "Q";
                 case 5 -> "K";
+                default -> "";
+            };
+        }
+        if (actualRow == 2) {
+            return "P";
+        }
+        if (actualRow == 7) {
+            return "p";
+        }
+        if (actualRow == 8) {
+            return switch (c) {
+                case 1, 8 -> "r";
+                case 2, 7 -> "n";
+                case 3, 6 -> "b";
+                case 4 -> "q";
+                case 5 -> "k";
                 default -> "";
             };
         }
