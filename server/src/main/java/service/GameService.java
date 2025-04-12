@@ -39,7 +39,6 @@ public class GameService {
         } catch (DataAccessException ex) {
             throw new UnauthorizedException("Invalid token");
         }
-        authDAO.getAuth(authToken);
 
         if (gameName == null || gameName.isEmpty()) {
             throw new BadRequestException("No gameName provided.");
@@ -51,11 +50,7 @@ public class GameService {
 
         } while (gameDAOAlreadyHas(gameID));
 
-
-        GameData newGame = new GameData(gameID,
-                null, null,
-                gameName, null);
-
+        GameData newGame = new GameData(gameID, null, null, gameName, null);
         gameDAO.createGame(newGame);
 
         return gameID;
@@ -71,7 +66,7 @@ public class GameService {
     }
 
     public boolean joinGame(String authToken, int gameID, String requestedColor)
-            throws UnauthorizedException, DataAccessException, BadRequestException{
+            throws UnauthorizedException, DataAccessException, BadRequestException {
 
         if (authToken == null || authToken.isEmpty()) {
             throw new UnauthorizedException("No token provided");
@@ -94,56 +89,47 @@ public class GameService {
         String currentWhite = game.whiteUsername();
         String currentBlack = game.blackUsername();
 
-        if (requestedColor == null) {
-            return true;
-        }
-
-        if (username.equals(currentWhite) || username.equals(currentBlack)) {
-            throw new BadRequestException("You're already participating in this game");
+        if (requestedColor == null || requestedColor.trim().isEmpty()) {
+            throw new BadRequestException("Error: must use team color (black or white)");
         }
 
         String color = requestedColor.toUpperCase();
         if (!"WHITE".equals(color) && !"BLACK".equals(color)) {
-            throw new BadRequestException("Invalid color: " + requestedColor);
+            throw new BadRequestException("Error: invalid team color");
         }
 
-        if ("WHITE".equals(color) && currentWhite != null) {
-            throw new BadRequestException("White color already taken");
-        }
-        if ("BLACK".equals(color) && currentBlack != null) {
-            throw new BadRequestException("Black color already taken");
+        if ("WHITE".equals(color)) {
+            if (currentWhite != null && !currentWhite.equals(username)) {
+                return false;
+            }
+            currentWhite = username;
+        } else {
+            if (currentBlack != null && !currentBlack.equals(username)) {
+                return false;
+            }
+            currentBlack = username;
         }
 
-        GameData updated = new GameData(
-                game.gameID(),
-                "WHITE".equals(color) ? username : currentWhite,
-                "BLACK".equals(color) ? username : currentBlack,
-                game.gameName(),
-                game.game()
-        );
+        GameData updated = new GameData(game.gameID(), currentWhite, currentBlack, game.gameName(), game.game());
         gameDAO.updateGame(updated);
         return true;
     }
 
     public void observeGame(String authToken, int gameID)
             throws UnauthorizedException, DataAccessException, BadRequestException {
-
         if (authToken == null || authToken.isEmpty()) {
             throw new UnauthorizedException("No token provided");
         }
-
         try {
             authDAO.getAuth(authToken);
         } catch (DataAccessException ex) {
             throw new UnauthorizedException("Invalid token");
         }
-
         try {
             gameDAO.getGame(gameID);
         } catch (DataAccessException ex) {
             throw new BadRequestException("Game not found: " + gameID);
         }
-
     }
 
 }
